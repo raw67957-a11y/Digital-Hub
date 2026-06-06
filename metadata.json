@@ -1,0 +1,6 @@
+{
+  "name": "Digital Hub",
+  "description": "Premium Digital Products store offering lifetime, instant, and risk-free bundles.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
