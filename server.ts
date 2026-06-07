@@ -99,9 +99,16 @@ async function startServer() {
           throw new Error(orderData.message || "Failed to establish secure merchant transaction.");
         }
 
+        const paymentLink = orderData.payment_link || 
+                            orderData.payments?.payment_link || 
+                            (paymentEnv === "production" 
+                              ? `https://payments.cashfree.com/order/#${orderData.payment_session_id}`
+                              : `https://sandbox.cashfree.com/order/#${orderData.payment_session_id}`);
+
         return res.json({
           success: true,
           paymentSessionId: orderData.payment_session_id,
+          paymentLink: paymentLink,
           orderId: orderData.order_id,
           amount: orderData.order_amount,
           currency: "INR",

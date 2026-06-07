@@ -1,17 +1,32 @@
 import React, { useState } from "react";
 import { PRODUCTS, REVIEWS } from "./data";
-import { Product, Review } from "./types";
+import { Product, Review, DiscountCode } from "./types";
 import Navbar from "./components/Navbar";
 import ProductCard from "./components/ProductCard";
 import CheckoutModal from "./components/CheckoutModal";
 import AdminPanel from "./components/AdminPanel";
+import PaymentSuccessModal from "./components/PaymentSuccessModal";
+import DownloadCenterModal from "./components/DownloadCenterModal";
 import { 
   Sparkles, ShieldCheck, Heart, Share2, MessageCircle, 
   HelpCircle, Star, Flame, Download, Check 
 } from "lucide-react";
 
 export default function App() {
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const stored = localStorage.getItem("app_products");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return PRODUCTS;
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("app_products", JSON.stringify(products));
+    } catch (e) {}
+  }, [products]);
+
   const [reviewsMap, setReviewsMap] = useState<Record<string, Review[]>>({
     "prod-1": REVIEWS,
     "prod-2": [
@@ -77,60 +92,124 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Dynamic global branding and payment gateway configurations
-  const [settings, setSettings] = useState({
-    logoText: "Digital Hub",
-    logoImage: "https://ibb.co/N6MFf1N",
-    footerText: "© 2026 Health Reels. All rights reserved.",
-    paymentLink: "https://reelsbazaar.com/",
-    email: "ashishrshinde15@gmail.com",
-    phone: "+919623508876",
-    video1: "https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022f73bcf7407d60f04e22596ab5933&profile_id=165&oauth2_token_id=57447761",
-    video2: "https://player.vimeo.com/external/434045526.sd.mp4?s=c27db11cf4ca9aa14704e6c310fb4e067fd4b39b&profile_id=165&oauth2_token_id=57447761",
-    video3: "https://player.vimeo.com/external/403842104.sd.mp4?s=d7fb47da2f1464b5849dfb0c95a2879f91a5ad56&profile_id=165&oauth2_token_id=57447761",
-    video4: "https://player.vimeo.com/external/434045546.sd.mp4?s=6761014cc6efc8e874f676be980b18f77eb513e9&profile_id=165&oauth2_token_id=57447761"
+  const [settings, setSettings] = useState(() => {
+    try {
+      const stored = localStorage.getItem("app_settings");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return {
+      logoText: "Digital Hub",
+      logoImage: "https://ibb.co/N6MFf1N",
+      footerText: "© 2026 Health Reels. All rights reserved.",
+      paymentLink: "https://reelsbazaar.com/",
+      email: "ashishrshinde15@gmail.com",
+      phone: "+919623508876",
+      video1: "https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022f73bcf7407d60f04e22596ab5933&profile_id=165&oauth2_token_id=57447761",
+      video2: "https://player.vimeo.com/external/434045526.sd.mp4?s=c27db11cf4ca9aa14704e6c310fb4e067fd4b39b&profile_id=165&oauth2_token_id=57447761",
+      video3: "https://player.vimeo.com/external/403842104.sd.mp4?s=d7fb47da2f1464b5849dfb0c95a2879f91a5ad56&profile_id=165&oauth2_token_id=57447761"
+    };
   });
 
-  // Dynamic order bookings - Preseeded to show organic statistics upon landing!
-  const [orders, setOrders] = useState([
-    {
-      id: "ord-1",
-      customerName: "ASHX GROW",
-      email: "ashxgrowofficial@gmail.com",
-      phone: "9623508876",
-      productName: "Get The Ultimate Health Reels Bundle",
-      amount: 15,
-      date: "06-06-2026 10:48"
-    },
-    {
-      id: "ord-2",
-      customerName: "ASHX GROW",
-      email: "ashxgrowofficial@gmail.com",
-      phone: "9623508876",
-      productName: "New Product (Health Reels)",
-      amount: 99,
-      date: "06-06-2026 10:35"
-    },
-    {
-      id: "ord-3",
-      customerName: "ASHX GROW",
-      email: "ashxgrowofficial@gmail.com",
-      phone: "9623508876",
-      productName: "Get The Ultimate Health Reels Bundle",
-      amount: 15,
-      date: "06-06-2026 10:10"
-    }
-  ]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("app_settings", JSON.stringify(settings));
+    } catch (e) {}
+  }, [settings]);
+
+  // Dynamic order bookings - Saved locally to persist organic & redirect payment statistics!
+  const [orders, setOrders] = useState(() => {
+    try {
+      const stored = localStorage.getItem("app_orders");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      {
+        id: "ord-1",
+        customerName: "ASHX GROW",
+        email: "ashxgrowofficial@gmail.com",
+        phone: "9623508876",
+        productName: "Get The Ultimate Health Reels Bundle",
+        amount: 15,
+        date: "06-06-2026 10:48"
+      },
+      {
+        id: "ord-2",
+        customerName: "ASHX GROW",
+        email: "ashxgrowofficial@gmail.com",
+        phone: "9623508876",
+        productName: "New Product (Health Reels)",
+        amount: 99,
+        date: "06-06-2026 10:35"
+      },
+      {
+        id: "ord-3",
+        customerName: "ASHX GROW",
+        email: "ashxgrowofficial@gmail.com",
+        phone: "9623508876",
+        productName: "Get The Ultimate Health Reels Bundle",
+        amount: 15,
+        date: "06-06-2026 10:10"
+      }
+    ];
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("app_orders", JSON.stringify(orders));
+    } catch (e) {}
+  }, [orders]);
 
   // Dynamic complimentary admin user access passes
-  const [userAccesses, setUserAccesses] = useState([
-    {
-      id: "ua-1",
-      userId: "525237",
-      productName: "All products (full access)",
-      note: "Primary client access badge",
-      date: "06-06-2026"
-    }
-  ]);
+  const [userAccesses, setUserAccesses] = useState(() => {
+    try {
+      const stored = localStorage.getItem("app_user_accesses");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      {
+        id: "ua-1",
+        userId: "525237",
+        productName: "All products (full access)",
+        note: "Primary client access badge",
+        date: "06-06-2026"
+      }
+    ];
+  });
+
+  React.useEffect(() => {
+    try {
+      localStorage.setItem("app_user_accesses", JSON.stringify(userAccesses));
+    } catch (e) {}
+  }, [userAccesses]);
+
+  // Automated Payment Success Redirection Capture & Download Center Overlay States
+  const [successPaymentData, setSuccessPaymentData] = useState<{
+    product: Product;
+    name: string;
+    email: string;
+    phone: string;
+  } | null>(null);
+
+  const [isDownloadCenterOpen, setIsDownloadCenterOpen] = useState(false);
+
+  const [discountCodes, setDiscountCodes] = useState<DiscountCode[]>(() => {
+    try {
+      const stored = localStorage.getItem("app_discount_codes");
+      if (stored) return JSON.parse(stored);
+    } catch (e) {}
+    return [
+      { id: "dc-1", code: "SAVE10", type: "flat", value: 10 },
+      { id: "dc-2", code: "SPECIAL50", type: "percentage", value: 50 },
+      { id: "dc-3", code: "ASHX50", type: "percentage", value: 50 }
+    ];
+  });
+
+  const handleUpdateDiscountCodes = (codes: DiscountCode[]) => {
+    setDiscountCodes(codes);
+    try {
+      localStorage.setItem("app_discount_codes", JSON.stringify(codes));
+    } catch (e) {}
+  };
 
   const handleAddProduct = (newProd: Product) => {
     setProducts((prev) => [newProd, ...prev]);
@@ -182,6 +261,55 @@ export default function App() {
     setUserAccesses((prev) => prev.filter((ua) => (ua.id !== id && ua.userId !== id)));
   };
 
+  // Automatic Payment Gateway Redirection Query Parameter Scanner
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const isSuccess = params.get("payment_success") === "true";
+      const productId = params.get("prod_id");
+
+      if (isSuccess && productId) {
+        // Match product by ID
+        const matched = products.find(p => p.id === productId);
+        if (matched) {
+          const customerName = params.get("name") || "Valued Customer";
+          const customerEmail = params.get("email") || "purchaser@reels.com";
+          const customerPhone = params.get("phone") || "";
+          const customerAmount = Number(params.get("amount") || matched.price);
+
+          setSuccessPaymentData({
+            product: matched,
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone
+          });
+
+          // Check if this order has already been logged locally to avoid duplicates
+          const alreadyLogged = orders.some(o => 
+            (o.email || "").toString().toLowerCase() === customerEmail.toLowerCase() && 
+            (o.productName || "").toString().toLowerCase() === matched.title.toLowerCase()
+          );
+
+          if (!alreadyLogged) {
+            handleAddOrder({
+              customerName,
+              email: customerEmail,
+              phone: customerPhone,
+              productName: matched.title,
+              amount: customerAmount
+            });
+          }
+
+          // Clean state parameters from browser URL bar cleanly without refreshing
+          const newUrl = window.location.pathname + window.location.hash;
+          window.history.replaceState({}, document.title, newUrl);
+        }
+      }
+    } catch (e) {
+      console.warn("Auto-Redirect check encountered query parameter parsing details: ", e);
+    }
+  }, [products, orders]);
+
   // Get active lists
   const categories = ["All", ...Array.from(new Set(products.map((p) => p.category)))];
 
@@ -213,6 +341,8 @@ export default function App() {
           onDeleteUserAccess={handleDeleteUserAccess}
           settings={settings}
           onUpdateSettings={setSettings}
+          discountCodes={discountCodes}
+          onUpdateDiscountCodes={handleUpdateDiscountCodes}
         />
       </div>
     );
@@ -226,6 +356,7 @@ export default function App() {
         onOpenAdmin={handleOpenAdminToggle} 
         isAdminOpen={isAdminOpen} 
         logoText={settings.logoText}
+        onOpenDownloadCenter={() => setIsDownloadCenterOpen(true)}
       />
 
       {/* Main Container */}
@@ -284,6 +415,28 @@ export default function App() {
           onAddReview={handleAddReview}
           onAddOrder={handleAddOrder}
           settings={settings}
+          discountCodes={discountCodes}
+        />
+      )}
+
+      {/* Automated Payment Successful Instant Access Popup */}
+      {successPaymentData && (
+        <PaymentSuccessModal
+          product={successPaymentData.product}
+          customerName={successPaymentData.name}
+          customerEmail={successPaymentData.email}
+          customerPhone={successPaymentData.phone}
+          onClose={() => setSuccessPaymentData(null)}
+        />
+      )}
+
+      {/* Self-Service Digital Files Claim / Download Verification Center */}
+      {isDownloadCenterOpen && (
+        <DownloadCenterModal
+          products={products}
+          orders={orders}
+          userAccesses={userAccesses}
+          onClose={() => setIsDownloadCenterOpen(false)}
         />
       )}
 

@@ -129,14 +129,14 @@ export default function ProductCard({ product, onSelect, isEditMode, onUpdatePro
                   ₹{product.originalPrice}
                 </span>
                 {product.discountTag && (
-                  <span className="bg-amber-400/10 text-[#fbbf24] border border-amber-400/20 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="bg-amber-400/10 text-[#fbbf24] border border-amber-400/20 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded flex items-center">
                     {product.discountTag} OFF
                   </span>
                 )}
               </div>
 
               {/* Glowing Animated Buy Now badge overlay */}
-              <div className="bg-[#fbbf24] text-black font-sans font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1 px-3 sm:py-1.5 rounded-xl sm:rounded-full shadow-[0_0_15px_rgba(251,191,36,0.85)] animate-pulse flex items-center gap-1 shrink-0">
+              <div className="bg-[#fbbf24] text-black font-sans font-black text-[10px] sm:text-xs px-2.5 sm:px-3.5 py-1 sm:py-1.5 rounded-xl sm:rounded-full shadow-[0_0_15px_rgba(251,191,36,0.85)] animate-pulse flex items-center gap-1 shrink-0">
                 <span>Buy Now</span>
                 <span className="text-[10px] sm:text-xs">⚡</span>
               </div>

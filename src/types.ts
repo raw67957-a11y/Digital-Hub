@@ -17,6 +17,8 @@ export interface Product {
   demoVideo2?: string;
   demoVideo3?: string;
   demoVideo4?: string;
+  directLink?: string;
+  bypassPayment?: boolean;
 }
 
 export interface Review {
@@ -32,3 +34,11 @@ export interface OrderForm {
   email: string;
   phone: string;
 }
+
+export interface DiscountCode {
+  id: string;
+  code: string;
+  type: "flat" | "percentage";
+  value: number;
+}
+

@@ -5,9 +5,10 @@ interface NavbarProps {
   onOpenAdmin: () => void;
   isAdminOpen: boolean;
   logoText?: string;
+  onOpenDownloadCenter: () => void;
 }
 
-export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarProps) {
+export default function Navbar({ onOpenAdmin, isAdminOpen, logoText, onOpenDownloadCenter }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Hidden admin panel activation keys
@@ -63,7 +64,15 @@ export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarPro
         </div>
 
         {/* Right Nav Options */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          {/* Claim/Downloaded Files Center */}
+          <button
+            onClick={onOpenDownloadCenter}
+            className="flex items-center gap-1.5 bg-[#fbbf24]/10 hover:bg-[#fbbf24] border border-[#fbbf24]/20 hover:border-amber-400 text-[#fbbf24] hover:text-black px-3 py-1.5 rounded-full select-none text-[10px] sm:text-xs font-black font-sans transition-all active:scale-95 cursor-pointer uppercase tracking-wider"
+          >
+            <span>📂 Get Access</span>
+          </button>
+
           {/* ID Pill from screenshot */}
           <div className="flex items-center gap-1.5 bg-[#140f10] border border-[#231a1c] px-3 py-1.5 rounded-full select-none">
             <span className="text-[10px] sm:text-xs font-mono text-gray-500 font-medium uppercase tracking-wider">
@@ -89,6 +98,36 @@ export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarPro
       {isMenuOpen && (
         <div className="absolute top-[73px] left-0 right-0 bg-[#0a0708] border-b border-[#231a1c] px-4 py-6 shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-4 z-50">
           <div className="max-w-md mx-auto flex flex-col gap-3">
+            {/* Download/Access Center option card */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                onOpenDownloadCenter();
+              }}
+              className="w-full bg-[#140f10] border border-amber-400/30 hover:border-amber-400 hover:bg-[#1a1415] text-white py-5 px-6 rounded-[1.5rem] flex items-center gap-4 transition-all duration-200 group text-left active:scale-98"
+            >
+              <div className="p-1 bg-[#231a1c] rounded-lg text-amber-400 transition-colors group-hover:bg-amber-400 group-hover:text-black">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="w-6 h-6"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <div>
+                <span className="text-xl font-display font-bold tracking-tight block text-amber-400">Claim My Files</span>
+                <span className="text-[10px] text-gray-500 font-medium font-sans">Get Google Drive Links instantly (डाउनलोड सेंटर)</span>
+              </div>
+            </button>
+
             {/* HOME option card */}
             <button
               onClick={() => {

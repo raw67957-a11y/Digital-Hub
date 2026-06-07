@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Product } from "../types";
+import { Product, DiscountCode } from "../types";
 import { 
   Lock, Key, Shield, Layout, ShoppingBag, 
   Video, Image, ListOrdered, UserCheck, Settings, 
@@ -22,6 +22,8 @@ interface AdminPanelProps {
   onDeleteUserAccess?: (id: string) => void;
   settings: any;
   onUpdateSettings: (newSettings: any) => void;
+  discountCodes?: DiscountCode[];
+  onUpdateDiscountCodes?: (codes: DiscountCode[]) => void;
 }
 
 export default function AdminPanel({
@@ -37,6 +39,8 @@ export default function AdminPanel({
   onDeleteUserAccess,
   settings,
   onUpdateSettings,
+  discountCodes = [],
+  onUpdateDiscountCodes,
 }: AdminPanelProps) {
   // Login State
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,9 +48,9 @@ export default function AdminPanel({
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // Tabs: 'dashboard', 'products', 'demoVideos', 'banner', 'orders', 'userAccess', 'settings', 'gallery'
+  // Tabs: 'dashboard', 'products', 'demoVideos', 'banner', 'orders', 'userAccess', 'settings', 'gallery', 'discounts'
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "products" | "demoVideos" | "banner" | "orders" | "userAccess" | "settings" | "gallery"
+    "dashboard" | "products" | "demoVideos" | "banner" | "orders" | "userAccess" | "settings" | "gallery" | "discounts"
   >("dashboard");
 
   // Gallery list state
@@ -110,13 +114,19 @@ export default function AdminPanel({
   const [prodDemoVideo1, setProdDemoVideo1] = useState("");
   const [prodDemoVideo2, setProdDemoVideo2] = useState("");
   const [prodDemoVideo3, setProdDemoVideo3] = useState("");
-  const [prodDemoVideo4, setProdDemoVideo4] = useState("");
+  const [prodDirectLink, setProdDirectLink] = useState("");
+  const [prodBypassPayment, setProdBypassPayment] = useState(false);
 
   // User Access Form State
   const [accessUserId, setAccessUserId] = useState("");
   const [accessProduct, setAccessProduct] = useState("All products (full access)");
   const [accessNote, setAccessNote] = useState("");
   const [accessMessage, setAccessMessage] = useState("");
+
+  // Discount code coupon creation states
+  const [newCodeName, setNewCodeName] = useState("");
+  const [newCodeType, setNewCodeType] = useState<"flat" | "percentage">("percentage");
+  const [newCodeValue, setNewCodeValue] = useState<number>(10);
 
   // Settings Temp States
   const [logoText, setLogoText] = useState(settings.logoText || "Digital Hub");
@@ -128,7 +138,6 @@ export default function AdminPanel({
   const [video1, setVideo1] = useState(settings.video1 || "https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022f73bcf7407d60f04e22596ab5933&profile_id=165&oauth2_token_id=57447761");
   const [video2, setVideo2] = useState(settings.video2 || "https://player.vimeo.com/external/434045526.sd.mp4?s=c27db11cf4ca9aa14704e6c310fb4e067fd4b39b&profile_id=165&oauth2_token_id=57447761");
   const [video3, setVideo3] = useState(settings.video3 || "https://player.vimeo.com/external/403842104.sd.mp4?s=d7fb47da2f1464b5849dfb0c95a2879f91a5ad56&profile_id=165&oauth2_token_id=57447761");
-  const [video4, setVideo4] = useState(settings.video4 || "https://player.vimeo.com/external/434045546.sd.mp4?s=6761014cc6efc8e874f676be980b18f77eb513e9&profile_id=165&oauth2_token_id=57447761");
 
   // Handle Sign-in Verification
   const handleSignIn = (e: React.FormEvent) => {
@@ -157,7 +166,8 @@ export default function AdminPanel({
     setProdDemoVideo1("");
     setProdDemoVideo2("");
     setProdDemoVideo3("");
-    setProdDemoVideo4("");
+    setProdDirectLink("");
+    setProdBypassPayment(false);
     setIsProductFormOpen(true);
   };
 
@@ -176,7 +186,8 @@ export default function AdminPanel({
     setProdDemoVideo1(product.demoVideo1 || "");
     setProdDemoVideo2(product.demoVideo2 || "");
     setProdDemoVideo3(product.demoVideo3 || "");
-    setProdDemoVideo4(product.demoVideo4 || "");
+    setProdDirectLink(product.directLink || "");
+    setProdBypassPayment(product.bypassPayment || false);
     setIsProductFormOpen(true);
   };
 
@@ -205,7 +216,8 @@ export default function AdminPanel({
         demoVideo1: prodDemoVideo1.trim() || undefined,
         demoVideo2: prodDemoVideo2.trim() || undefined,
         demoVideo3: prodDemoVideo3.trim() || undefined,
-        demoVideo4: prodDemoVideo4.trim() || undefined,
+        directLink: prodDirectLink.trim() || undefined,
+        bypassPayment: prodBypassPayment,
       };
       onUpdateProduct(updated);
     } else {
@@ -227,7 +239,8 @@ export default function AdminPanel({
         demoVideo1: prodDemoVideo1.trim() || undefined,
         demoVideo2: prodDemoVideo2.trim() || undefined,
         demoVideo3: prodDemoVideo3.trim() || undefined,
-        demoVideo4: prodDemoVideo4.trim() || undefined,
+        directLink: prodDirectLink.trim() || undefined,
+        bypassPayment: prodBypassPayment,
       };
       onAddProduct(created);
     }
@@ -517,6 +530,18 @@ export default function AdminPanel({
               <Sparkles className="w-3.5 h-3.5" />
               <span>Photo Gallery</span>
             </button>
+
+            <button
+              onClick={() => { setActiveTab("discounts"); setIsProductFormOpen(false); }}
+              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                activeTab === "discounts"
+                  ? "bg-[#fbbf24] text-black"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>Discount Codes</span>
+            </button>
           </nav>
 
           {/* Core Tab Canvas Wrapper */}
@@ -576,6 +601,51 @@ export default function AdminPanel({
                     <span className="text-4xl font-display font-black text-[#fbbf24] block mt-4 select-none">
                       {uniqueEmails}
                     </span>
+                  </div>
+                </div>
+
+                {/* Highly Informative Direct Payment Link Setup Guide Container */}
+                <div className="bg-[#140f10] border border-amber-500/20 rounded-2xl p-5 sm:p-6 space-y-4 shadow-xl">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-2xl">💡</span>
+                    <div>
+                      <h4 className="text-sm font-black text-white uppercase tracking-wider">
+                        Direct Payment Flow Guide (How to give Access Automatically)
+                      </h4>
+                      <p className="text-[10px] text-[#fbbf24] font-bold mt-0.5">
+                        Bypass checkout settings operational guide for Cashfree / Coseller link setup
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-300 leading-relaxed font-sans">
+                    Jab aap <strong>Cashfree / Coseller / Instamojo</strong> ka direct check-out link lagate hain, toh transaction successful hone ke baad customer ko automatically <strong>Google Drive Links (Access Folder)</strong> dene ke <strong>2 sabse genuine and trusted automatic tareeqe</strong> hain:
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+                    <div className="bg-black/50 border border-[#231a1c] p-4 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-amber-400 text-black font-black px-1.5 py-0.5 rounded">METHOD 1</span>
+                        <h5 className="text-xs font-bold text-white uppercase tracking-wider">Auto-Redirect (Return URL)</h5>
+                      </div>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Apne <strong>Cashfree or Coseller Merchant Dashboard</strong> mein jayein aur us payment link/product settings ko edit karein. Wahan par <strong>"Return URL" / "Redirect URL after Payment"</strong> ka option hoga. Us safety field mein us specific product ka <strong>Google Drive / Delivery link</strong> daal dein. Payment complete hote hi user drive link par redirect ho jayega!
+                      </p>
+                    </div>
+
+                    <div className="bg-black/50 border border-[#231a1c] p-4 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs bg-amber-400 text-black font-black px-1.5 py-0.5 rounded">METHOD 2</span>
+                        <h5 className="text-xs font-bold text-white uppercase tracking-wider">Success Page Message / Note</h5>
+                      </div>
+                      <p className="text-[11px] text-gray-400 leading-relaxed">
+                        Cashfree Link settings web form mein click karke click-action customized confirmation screen edit karein. Wahan <strong>"Thank You Message" / "Show Custom Message after payment"</strong> setup enable karein aura likhein: <em>"Aapki payment safal rahi! Ultimate Reels Bundle folder access karne ke liye yahan click karein: [Paste Google Drive Link]"</em>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] text-gray-500 pt-1 font-mono flex items-center gap-1.5 justify-center sm:justify-start">
+                    <span>⚡ No manual verification needed • 100% Automated Customer Access</span>
                   </div>
                 </div>
 
@@ -753,48 +823,105 @@ export default function AdminPanel({
                           className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none resize-none font-mono text-[11px]"
                           placeholder="Premium 9:16 portrait video files without logo&#10;Fully organized Starred Google Drive link folder"
                         />
-                      </div>
-
-                      {/* Product Image Selection & Input */}
-                      <div className="space-y-2 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
-                        <span className="text-gray-400 font-bold block mb-1">Product Cover Image (Photo)</span>
-                        <div className="space-y-3">
-                          <input
-                            type="text"
-                            required
-                            placeholder="Paste custom image URL here"
-                            value={prodImage}
-                            onChange={(e) => setProdImage(e.target.value)}
-                            className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none font-mono"
-                          />
-                          <span className="text-[10px] text-gray-500 block">Or select an aesthetic cover from the premium design gallery below:</span>
-                          
-                           {/* Aesthetic Design Gallery Picker */}
-                          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-1.5">
-                            {gallery.map((galleryItem, idx) => (
-                              <button
-                                key={idx}
-                                type="button"
-                                onClick={() => setProdImage(galleryItem.url)}
-                                className={`group relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all active:scale-95 ${
-                                  prodImage === galleryItem.url ? "border-amber-400 font-extrabold shadow-lg shadow-amber-500/10" : "border-[#231a1c] hover:border-gray-500"
-                                }`}
+                       {/* Product Image Selection & Input */}
+                      <div className="space-y-4 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#fbbf24] font-extrabold text-xs uppercase tracking-wider block">Product Cover Image (Photo)</span>
+                          <span className="text-[10px] text-gray-500 font-bold">Recommended: 16:9 ratio</span>
+                        </div>
+                        
+                        {/* Live Cover Preview */}
+                        {prodImage && (
+                          <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#231a1c] bg-black/40">
+                            <img 
+                              src={prodImage} 
+                              alt="Cover Preview" 
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/40 to-transparent p-2 flex justify-between items-center">
+                              <span className="text-[9px] text-emerald-400 font-bold bg-[#0a0708]/90 px-1.5 py-0.5 rounded border border-emerald-500/20">PREVIEW LIVE</span>
+                              <button 
+                                type="button" 
+                                onClick={() => setProdImage("")}
+                                className="text-[9px] text-red-400 font-bold bg-[#0a0708]/90 px-1.5 py-0.5 rounded border border-red-500/20 hover:bg-red-500/10 transition-colors"
                               >
-                                <img
-                                  src={galleryItem.url}
-                                  alt={galleryItem.label}
-                                  referrerPolicy="no-referrer"
-                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                />
-                                <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <span className="text-[8px] text-white font-sans bg-black/85 px-1 py-0.5 rounded-sm truncate max-w-full">
-                                    {galleryItem.label}
-                                  </span>
-                                </div>
+                                Clear Image ✕
                               </button>
-                            ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Option A: Direct Gallery Upload 📁</label>
+                              <div className="relative group flex items-center justify-center bg-[#140f10] hover:bg-[#1a1415] border border-dashed border-[#231a1c] hover:border-amber-400/50 rounded-lg px-3 py-2.5 transition-all cursor-pointer text-center min-h-[46px]">
+                                <span className="text-[11px] text-amber-400 group-hover:text-amber-300 font-black flex items-center gap-1">
+                                  <span>📁 Select Photo from Gallery</span>
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        if (typeof reader.result === "string") {
+                                          setProdImage(reader.result);
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Option B: Image URL (Link)</label>
+                              <input
+                                type="text"
+                                placeholder="Paste custom web image URL here"
+                                value={prodImage.startsWith("data:") ? "" : prodImage}
+                                onChange={(e) => setProdImage(e.target.value)}
+                                className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none font-mono text-xs min-h-[46px]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="pt-1.5 border-t border-[#140f10]">
+                            <span className="text-[10px] text-gray-500 block mb-1.5 uppercase font-bold tracking-wider">Option C: Choose from Design Catalog Templates below:</span>
+                            {/* Aesthetic Design Gallery Picker */}
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                              {gallery.map((galleryItem, idx) => (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setProdImage(galleryItem.url)}
+                                  className={`group relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all active:scale-95 ${
+                                    prodImage === galleryItem.url ? "border-amber-400 font-extrabold shadow-lg shadow-amber-500/10" : "border-[#231a1c] hover:border-gray-500"
+                                  }`}
+                                >
+                                  <img
+                                    src={galleryItem.url}
+                                    alt={galleryItem.label}
+                                    referrerPolicy="no-referrer"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  />
+                                  <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span className="text-[8px] text-white font-sans bg-black/85 px-1 py-0.5 rounded-sm truncate max-w-full">
+                                      {galleryItem.label}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
                           </div>
                         </div>
+                      </div>
                       </div>
 
                       {/* Product Delivery Google Drive Link */}
@@ -810,6 +937,26 @@ export default function AdminPanel({
                           onChange={(e) => setProdDriveLink(e.target.value)}
                           className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white font-mono text-[11px] outline-none mt-1"
                         />
+                      </div>
+
+                      {/* Product Direct Link Payment Page URL Option */}
+                      <div className="space-y-3 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
+                        <div>
+                          <label className="text-xs text-amber-400 font-bold uppercase tracking-wider block">Direct Payment / Checkout Link (URL)</label>
+                          <span className="text-[10px] text-gray-400 block leading-normal mt-0.5">
+                            Provide the direct payment or checkout gateway URL for this product specifically (e.g. Coseller, Cashfree, or Instamojo). Clicking "Access Now" will immediately send visitors to this URL to complete payment.
+                          </span>
+                        </div>
+                        <input
+                          type="url"
+                          placeholder="e.g. https://coseller.co/buy/your-reels-bundle-package"
+                          value={prodDirectLink}
+                          onChange={(e) => setProdDirectLink(e.target.value)}
+                          className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white font-mono text-[11px] outline-none"
+                        />
+                        <p className="text-[9px] text-gray-500 font-sans">
+                          If left empty, users will automatically fall back to the global store link configured in global settings.
+                        </p>
                       </div>
 
                       {/* Product Demo Videos (Optional) */}
@@ -848,16 +995,6 @@ export default function AdminPanel({
                               placeholder="e.g. https://player.vimeo.com/external/..."
                               value={prodDemoVideo3}
                               onChange={(e) => setProdDemoVideo3(e.target.value)}
-                              className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-1.5 text-white font-mono text-[11px] outline-none"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Demo Video 4 (.mp4 link)</label>
-                            <input
-                              type="url"
-                              placeholder="e.g. https://player.vimeo.com/external/..."
-                              value={prodDemoVideo4}
-                              onChange={(e) => setProdDemoVideo4(e.target.value)}
                               className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-1.5 text-white font-mono text-[11px] outline-none"
                             />
                           </div>
@@ -906,6 +1043,16 @@ export default function AdminPanel({
                             <div className="flex items-center gap-2 text-xs">
                               <span className="font-extrabold text-[#fbbf24]">₹{p.price}</span>
                               <span className="text-gray-600 line-through">₹{p.originalPrice}</span>
+                              <span>•</span>
+                              {p.directLink ? (
+                                <span className="text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border border-amber-500/10" title={p.directLink}>
+                                  🔗 Custom Link
+                                </span>
+                              ) : (
+                                <span className="text-blue-400 bg-blue-500/5 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border border-blue-500/10">
+                                  🌐 Default Link
+                                </span>
+                              )}
                               <span>•</span>
                               {p.isHidden ? (
                                 <span className="text-rose-400 bg-rose-500/5 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider border border-rose-500/10">
@@ -975,10 +1122,10 @@ export default function AdminPanel({
                 <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4">
                   <span className="text-xs tracking-wider font-bold uppercase text-[#fbbf24] block">Featured Preview Reels Channel</span>
                   <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
-                    These are 4 video shorts pre-loaded into client views to allow users to verify the resolution, aesthetic filters, and neon frames of the health compilation bundle immediately before they purchase.
+                    These are 3 video shorts pre-loaded into client views to allow users to verify the resolution, aesthetic filters, and neon frames of the health compilation bundle immediately before they purchase.
                   </p>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                     <div className="bg-[#0a0708] border border-[#231a1c] p-4 rounded-xl space-y-2">
                       <h5 className="text-xs font-bold text-gray-300">Fitness Demo Clip 1 (Portrait URL)</h5>
                       <input
@@ -1006,15 +1153,6 @@ export default function AdminPanel({
                         className="w-full bg-[#140f10] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-lg px-3 py-2 text-xs font-mono text-gray-300 outline-none"
                       />
                     </div>
-                    <div className="bg-[#0a0708] border border-[#231a1c] p-4 rounded-xl space-y-2">
-                      <h5 className="text-xs font-bold text-gray-300">Running Demo Clip 4 (Portrait URL)</h5>
-                      <input
-                        type="text"
-                        value={video4}
-                        onChange={(e) => setVideo4(e.target.value)}
-                        className="w-full bg-[#140f10] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-lg px-3 py-2 text-xs font-mono text-gray-300 outline-none"
-                      />
-                    </div>
                   </div>
 
                   <button
@@ -1024,9 +1162,8 @@ export default function AdminPanel({
                         video1,
                         video2,
                         video3,
-                        video4,
                       });
-                      alert("All 4 demo preview video links updated successfully!");
+                      alert("All 3 demo preview video links updated successfully!");
                     }}
                     className="py-2.5 px-6 bg-[#fbbf24] text-black font-extrabold text-xs rounded-xl hover:bg-white transition-all font-sans cursor-pointer font-sans"
                   >
@@ -1520,6 +1657,156 @@ export default function AdminPanel({
                       {gallery.length === 0 && (
                         <div className="col-span-full py-12 text-center text-xs text-gray-600">
                           Your custom Photo Gallery is empty. Add photo links using the form on the left.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* -------------------- VIEW I: DYNAMIC DISCOUNT CODES MANAGER -------------------- */}
+            {activeTab === "discounts" && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-xl font-display font-black text-white">Discount Coupon Codes</h2>
+                  <p className="text-xs text-gray-500">Create, customize and activate promo discount codes for customers</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start font-sans text-xs">
+                  {/* Left Column: Form to create code */}
+                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-1">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
+                      Generate New Code
+                    </h3>
+
+                    <form 
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!newCodeName.trim()) return;
+                        const formattedCode = newCodeName.trim().toUpperCase().replace(/\s+/g, '');
+                        
+                        // Check duplicates
+                        if (discountCodes.some(c => c.code === formattedCode)) {
+                          alert("A coupon code with this handle already exists!");
+                          return;
+                        }
+
+                        const newCode: DiscountCode = {
+                          id: `dc-${Date.now()}`,
+                          code: formattedCode,
+                          type: newCodeType,
+                          value: Number(newCodeValue) || 0
+                        };
+
+                        if (onUpdateDiscountCodes) {
+                          onUpdateDiscountCodes([...discountCodes, newCode]);
+                        }
+                        
+                        setNewCodeName("");
+                        setNewCodeValue(10);
+                        alert(`Discount code "${formattedCode}" generated and activated successfully!`);
+                      }} 
+                      className="space-y-4"
+                    >
+                      <div className="space-y-1">
+                        <label className="text-gray-400 font-semibold">Promo Code (e.g. ULTRA50, ASHISH25)</label>
+                        <input
+                          type="text"
+                          required
+                          value={newCodeName}
+                          onChange={(e) => setNewCodeName(e.target.value)}
+                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs font-mono uppercase"
+                          placeholder="e.g. HALFOFF"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-gray-400 font-semibold">Discount Type</label>
+                        <select
+                          value={newCodeType}
+                          onChange={(e: any) => setNewCodeType(e.target.value)}
+                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-3 py-2.5 text-white outline-none transition-all text-xs cursor-pointer"
+                        >
+                          <option value="percentage">Percentage (%) Discount</option>
+                          <option value="flat">Flat Value (₹) Discount</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-gray-400 font-semibold">Discount Value</label>
+                        <input
+                          type="number"
+                          required
+                          min={1}
+                          max={newCodeType === "percentage" ? 100 : 9999}
+                          value={newCodeValue}
+                          onChange={(e) => setNewCodeValue(Number(e.target.value))}
+                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs"
+                          placeholder="e.g. 10"
+                        />
+                        <span className="text-[10px] text-gray-500 block pt-1">
+                          {newCodeType === "percentage" ? "Enter percent discount (1 - 100)" : "Enter amount to reduce in INR (₹)"}
+                        </span>
+                      </div>
+
+                      <button
+                        type="submit"
+                        className="w-full py-3 bg-[#fbbf24] hover:bg-white text-black font-extrabold text-xs rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4 stroke-[2.5px]" />
+                        <span>Generate & Activate</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Right Column: Listing and deleting existing codes */}
+                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-2">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
+                      Active Coupon Codes ({discountCodes.length})
+                    </h3>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {discountCodes.map((codeItem) => (
+                        <div 
+                          key={codeItem.id}
+                          className="bg-[#0a0708] border border-[#231a1c] rounded-xl p-4 flex flex-col justify-between space-y-3"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <span className="bg-[#fbbf24]/10 text-[#fbbf24] font-mono text-sm leading-none font-black px-2 py-1 rounded border border-[#fbbf24]/20 select-all uppercase">
+                                {codeItem.code}
+                              </span>
+                              <div className="text-[10px] text-gray-500 mt-2 font-sans">
+                                Benefit: <span className="text-gray-300 font-bold">{codeItem.type === "percentage" ? `${codeItem.value}% off` : `₹${codeItem.value} flat discount`}</span>
+                              </div>
+                            </div>
+
+                            <span className="bg-emerald-500/10 text-emerald-400 font-sans text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/10">
+                              Active
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Deactivate promo coupon "${codeItem.code}"?`)) {
+                                if (onUpdateDiscountCodes) {
+                                  onUpdateDiscountCodes(discountCodes.filter(c => c.id !== codeItem.id));
+                                }
+                              }
+                            }}
+                            className="w-full py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold rounded-lg border border-rose-500/10 flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Deactivate Code</span>
+                          </button>
+                        </div>
+                      ))}
+
+                      {discountCodes.length === 0 && (
+                        <div className="col-span-full py-12 text-center text-xs text-gray-600 font-sans">
+                          No active promo discount codes available. Generate codes on the left panel!
                         </div>
                       )}
                     </div>
