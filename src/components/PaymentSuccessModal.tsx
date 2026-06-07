@@ -127,7 +127,7 @@ export default function PaymentSuccessModal({
             </>
           ) : (
             <div className="p-3 bg-amber-500/5 border border-amber-500/10 rounded-xl text-xs text-amber-400 leading-relaxed font-medium">
-              ⚠️ Admin is currently updating this specific item's Drive link file folder. Please contact customer help at <strong>9623508876</strong> to claim manually with your order receipt copy!
+              ⚠️ Admin is currently updating this specific item's Drive link file folder. Please contact customer help at <strong>+91 96235 08876</strong> to claim manually with your order receipt copy!
             </div>
           )}
         </div>

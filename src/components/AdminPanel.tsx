@@ -48,50 +48,10 @@ export default function AdminPanel({
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
 
-  // Tabs: 'dashboard', 'products', 'demoVideos', 'banner', 'orders', 'userAccess', 'settings', 'gallery', 'discounts'
+  // Tabs: 'dashboard', 'products', 'orders', 'settings'
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "products" | "demoVideos" | "banner" | "orders" | "userAccess" | "settings" | "gallery" | "discounts"
+    "dashboard" | "products" | "orders" | "settings"
   >("dashboard");
-
-  // Gallery list state
-  const [gallery, setGallery] = useState<{ url: string; label: string }[]>(() => {
-    try {
-      const stored = localStorage.getItem("admin_gallery_images");
-      if (stored) return JSON.parse(stored);
-    } catch (e) {}
-    return [
-      { url: "https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80", label: "Elite Fitness" },
-      { url: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=500&auto=format&fit=crop&q=80", label: "Pure Yoga" },
-      { url: "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=500&auto=format&fit=crop&q=80", label: "Premium Bundle" },
-      { url: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=500&auto=format&fit=crop&q=80", label: "Active Wellness" },
-      { url: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=500&auto=format&fit=crop&q=80", label: "Dumbbell Set" },
-      { url: "https://images.unsplash.com/photo-1518310383802-640c2de311b2?w=500&auto=format&fit=crop&q=80", label: "Fitness Gear" }
-    ];
-  });
-
-  const [galleryNewUrl, setGalleryNewUrl] = useState("");
-  const [galleryNewLabel, setGalleryNewLabel] = useState("");
-
-  const handleAddToGallery = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!galleryNewUrl.trim()) return;
-    const itemLabel = galleryNewLabel.trim() || `Photo Model ${gallery.length + 1}`;
-    const updated = [...gallery, { url: galleryNewUrl.trim(), label: itemLabel }];
-    setGallery(updated);
-    try {
-      localStorage.setItem("admin_gallery_images", JSON.stringify(updated));
-    } catch (err) {}
-    setGalleryNewUrl("");
-    setGalleryNewLabel("");
-  };
-
-  const handleDeleteFromGallery = (indexToDelete: number) => {
-    const updated = gallery.filter((_, idx) => idx !== indexToDelete);
-    setGallery(updated);
-    try {
-      localStorage.setItem("admin_gallery_images", JSON.stringify(updated));
-    } catch (err) {}
-  };
 
   // Local Action States
   const [isProductFormOpen, setIsProductFormOpen] = useState(false);
@@ -104,29 +64,14 @@ export default function AdminPanel({
   const [prodTitle, setProdTitle] = useState("");
   const [prodPrice, setProdPrice] = useState(49);
   const [prodOriginalPrice, setProdOriginalPrice] = useState(149);
-  const [prodDiscountTag, setProdDiscountTag] = useState("-67%");
   const [prodDiscountText, setProdDiscountText] = useState("120+ Viral Templates");
   const [prodDescription, setProdDescription] = useState("");
-  const [prodCategory, setProdCategory] = useState("Health Reels");
   const [prodFeaturesInput, setProdFeaturesInput] = useState("");
   const [prodImage, setProdImage] = useState("");
+  const [prodCheckoutImage, setProdCheckoutImage] = useState("");
+  const [prodMainVideo, setProdMainVideo] = useState("");
   const [prodDriveLink, setProdDriveLink] = useState("");
-  const [prodDemoVideo1, setProdDemoVideo1] = useState("");
-  const [prodDemoVideo2, setProdDemoVideo2] = useState("");
-  const [prodDemoVideo3, setProdDemoVideo3] = useState("");
   const [prodDirectLink, setProdDirectLink] = useState("");
-  const [prodBypassPayment, setProdBypassPayment] = useState(false);
-
-  // User Access Form State
-  const [accessUserId, setAccessUserId] = useState("");
-  const [accessProduct, setAccessProduct] = useState("All products (full access)");
-  const [accessNote, setAccessNote] = useState("");
-  const [accessMessage, setAccessMessage] = useState("");
-
-  // Discount code coupon creation states
-  const [newCodeName, setNewCodeName] = useState("");
-  const [newCodeType, setNewCodeType] = useState<"flat" | "percentage">("percentage");
-  const [newCodeValue, setNewCodeValue] = useState<number>(10);
 
   // Settings Temp States
   const [logoText, setLogoText] = useState(settings.logoText || "Digital Hub");
@@ -134,10 +79,7 @@ export default function AdminPanel({
   const [footerText, setFooterText] = useState(settings.footerText || "© 2026 Health Reels. All rights reserved.");
   const [paymentLink, setPaymentLink] = useState(settings.paymentLink || "https://reelsbazaar.com/");
   const [contactEmail, setContactEmail] = useState(settings.email || "ashishrshinde15@gmail.com");
-  const [contactPhone, setContactPhone] = useState(settings.phone || "+919623508876");
-  const [video1, setVideo1] = useState(settings.video1 || "https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c022f73bcf7407d60f04e22596ab5933&profile_id=165&oauth2_token_id=57447761");
-  const [video2, setVideo2] = useState(settings.video2 || "https://player.vimeo.com/external/434045526.sd.mp4?s=c27db11cf4ca9aa14704e6c310fb4e067fd4b39b&profile_id=165&oauth2_token_id=57447761");
-  const [video3, setVideo3] = useState(settings.video3 || "https://player.vimeo.com/external/403842104.sd.mp4?s=d7fb47da2f1464b5849dfb0c95a2879f91a5ad56&profile_id=165&oauth2_token_id=57447761");
+  const [contactPhone, setContactPhone] = useState(settings.phone || "+91 96235 08876");
 
   // Handle Sign-in Verification
   const handleSignIn = (e: React.FormEvent) => {
@@ -156,18 +98,14 @@ export default function AdminPanel({
     setProdTitle("");
     setProdPrice(99);
     setProdOriginalPrice(199);
-    setProdDiscountTag("");
     setProdDiscountText("100+ Health Reels Bundle");
-    setProdCategory("Health & Fitness");
     setProdDescription("");
     setProdFeaturesInput("");
     setProdImage("https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=500&auto=format&fit=crop&q=80");
+    setProdCheckoutImage("");
+    setProdMainVideo("");
     setProdDriveLink("");
-    setProdDemoVideo1("");
-    setProdDemoVideo2("");
-    setProdDemoVideo3("");
     setProdDirectLink("");
-    setProdBypassPayment(false);
     setIsProductFormOpen(true);
   };
 
@@ -176,18 +114,14 @@ export default function AdminPanel({
     setProdTitle(product.title);
     setProdPrice(product.price);
     setProdOriginalPrice(product.originalPrice);
-    setProdDiscountTag(product.discountTag);
     setProdDiscountText(product.discountText);
-    setProdCategory(product.category);
     setProdDescription(product.description);
     setProdFeaturesInput(product.features.join("\n"));
     setProdImage(product.image);
+    setProdCheckoutImage(product.checkoutImage || "");
+    setProdMainVideo(product.mainVideo || "");
     setProdDriveLink(product.driveLink || "");
-    setProdDemoVideo1(product.demoVideo1 || "");
-    setProdDemoVideo2(product.demoVideo2 || "");
-    setProdDemoVideo3(product.demoVideo3 || "");
     setProdDirectLink(product.directLink || "");
-    setProdBypassPayment(product.bypassPayment || false);
     setIsProductFormOpen(true);
   };
 
@@ -199,6 +133,8 @@ export default function AdminPanel({
       ? prodFeaturesInput.split("\n").map((f) => f.trim()).filter(Boolean)
       : ["Premium vertical clips", "Lifetime Access Included", "HD Video files directly in Drive"];
 
+    const calculatedDiscountTag = `-${Math.round(((Number(prodOriginalPrice) - Number(prodPrice)) / Number(prodOriginalPrice)) * 100)}%`;
+
     if (editingProduct) {
       // Update
       const updated: Product = {
@@ -206,18 +142,15 @@ export default function AdminPanel({
         title: prodTitle,
         price: Number(prodPrice),
         originalPrice: Number(prodOriginalPrice),
-        discountTag: prodDiscountTag,
+        discountTag: calculatedDiscountTag,
         discountText: prodDiscountText,
         image: prodImage || editingProduct.image,
-        category: prodCategory,
+        checkoutImage: prodCheckoutImage || undefined,
+        mainVideo: prodMainVideo || undefined,
         description: prodDescription.trim(),
         features: featuresArray,
         driveLink: prodDriveLink.trim() || undefined,
-        demoVideo1: prodDemoVideo1.trim() || undefined,
-        demoVideo2: prodDemoVideo2.trim() || undefined,
-        demoVideo3: prodDemoVideo3.trim() || undefined,
         directLink: prodDirectLink.trim() || undefined,
-        bypassPayment: prodBypassPayment,
       };
       onUpdateProduct(updated);
     } else {
@@ -227,20 +160,18 @@ export default function AdminPanel({
         title: prodTitle,
         price: Number(prodPrice),
         originalPrice: Number(prodOriginalPrice),
-        discountTag: prodDiscountTag,
+        discountTag: calculatedDiscountTag,
         discountText: prodDiscountText,
         image: prodImage || "https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=500&auto=format&fit=crop&q=80",
-        category: prodCategory,
+        checkoutImage: prodCheckoutImage || undefined,
+        mainVideo: prodMainVideo || undefined,
+        category: "Bundles",
         rating: 4.9,
         buyersCount: 1,
         description: prodDescription.trim() || "Premium custom catalog bundle updated.",
         features: featuresArray,
         driveLink: prodDriveLink.trim() || undefined,
-        demoVideo1: prodDemoVideo1.trim() || undefined,
-        demoVideo2: prodDemoVideo2.trim() || undefined,
-        demoVideo3: prodDemoVideo3.trim() || undefined,
         directLink: prodDirectLink.trim() || undefined,
-        bypassPayment: prodBypassPayment,
       };
       onAddProduct(created);
     }
@@ -275,28 +206,6 @@ export default function AdminPanel({
     a.click();
   };
 
-  // Grant User Access Action
-  const handleGrantAccess = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!accessUserId.trim() || accessUserId.length !== 6) {
-      setAccessMessage("User ID must be exactly a 6-digit number.");
-      return;
-    }
-
-    if (onAddUserAccess) {
-      onAddUserAccess({
-        userId: accessUserId.trim(),
-        productName: accessProduct,
-        note: accessNote.trim() || "Granted by Owner Desk",
-        date: new Date().toLocaleDateString(),
-      });
-      setAccessUserId("");
-      setAccessNote("");
-      setAccessMessage("Access granted successfully!");
-      setTimeout(() => setAccessMessage(""), 4000);
-    }
-  };
-
   // Save Settings State globally
   const handleSaveSettings = () => {
     onUpdateSettings({
@@ -311,10 +220,11 @@ export default function AdminPanel({
   };
 
   // Calculate stats based on orders list
+  const validOrders = orders.filter((o) => (o as any).status !== "Cancel");
   const totalOrdersCount = orders.length;
-  const paidOrdersCount = orders.length; // assuming checkout in our applet means paid state
-  const totalRevenueSum = orders.reduce((acc, curr) => acc + curr.amount, 0);
-  const uniqueEmails = Array.from(new Set(orders.map((o) => o.email.toLowerCase()))).length;
+  const paidOrdersCount = validOrders.length;
+  const totalRevenueSum = validOrders.reduce((acc, curr) => acc + curr.amount, 0);
+  const uniqueEmails = Array.from(new Set(validOrders.map((o) => o.email.toLowerCase()))).length;
 
   // Filtered orders list for table query
   const filteredOrders = orders.filter((o) => {
@@ -460,30 +370,6 @@ export default function AdminPanel({
             </button>
 
             <button
-              onClick={() => { setActiveTab("demoVideos"); setIsProductFormOpen(false); }}
-              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === "demoVideos"
-                  ? "bg-[#fbbf24] text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Video className="w-3.5 h-3.5" />
-              <span>Demo Videos</span>
-            </button>
-
-            <button
-              onClick={() => { setActiveTab("banner"); setIsProductFormOpen(false); }}
-              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === "banner"
-                  ? "bg-[#fbbf24] text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Image className="w-3.5 h-3.5" />
-              <span>Banner</span>
-            </button>
-
-            <button
               onClick={() => { setActiveTab("orders"); setIsProductFormOpen(false); }}
               className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 activeTab === "orders"
@@ -496,18 +382,6 @@ export default function AdminPanel({
             </button>
 
             <button
-              onClick={() => { setActiveTab("userAccess"); setIsProductFormOpen(false); }}
-              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === "userAccess"
-                  ? "bg-[#fbbf24] text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <UserCheck className="w-3.5 h-3.5" />
-              <span>User Access</span>
-            </button>
-
-            <button
               onClick={() => { setActiveTab("settings"); setIsProductFormOpen(false); }}
               className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                 activeTab === "settings"
@@ -517,30 +391,6 @@ export default function AdminPanel({
             >
               <Settings className="w-3.5 h-3.5" />
               <span>Settings</span>
-            </button>
-
-            <button
-              onClick={() => { setActiveTab("gallery"); setIsProductFormOpen(false); }}
-              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === "gallery"
-                  ? "bg-[#fbbf24] text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Photo Gallery</span>
-            </button>
-
-            <button
-              onClick={() => { setActiveTab("discounts"); setIsProductFormOpen(false); }}
-              className={`py-1.5 px-3.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeTab === "discounts"
-                  ? "bg-[#fbbf24] text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Key className="w-3.5 h-3.5" />
-              <span>Discount Codes</span>
             </button>
           </nav>
 
@@ -648,44 +498,6 @@ export default function AdminPanel({
                     <span>⚡ No manual verification needed • 100% Automated Customer Access</span>
                   </div>
                 </div>
-
-                {/* Recent Orders table Box styled exactly like Screenshot 2 */}
-                <div className="bg-[#140f10] border border-[#231a1c] rounded-2xl overflow-hidden shadow-sm">
-                  <div className="px-5 py-4 border-b border-[#231a1c]">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-sans">
-                      Recent Orders
-                    </h3>
-                  </div>
-                  <div className="overflow-x-auto w-full">
-                    <table className="w-full text-left text-xs font-sans text-gray-300">
-                      <thead>
-                        <tr className="bg-[#0e0a0b] text-[10px] font-bold text-gray-400 tracking-wider uppercase border-b border-[#231a1c]">
-                          <th className="px-5 py-3">Customer</th>
-                          <th className="px-5 py-3">Email</th>
-                          <th className="px-5 py-3 text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#231a1c]">
-                        {orders.slice(0, 5).map((o) => (
-                          <tr key={o.id} className="hover:bg-white/[0.01] transition-colors">
-                            <td className="px-5 py-3.5 font-bold text-gray-200">{o.customerName}</td>
-                            <td className="px-5 py-3.5 text-gray-400">{o.email}</td>
-                            <td className="px-5 py-3.5 text-right font-black text-[#fbbf24] text-xs">
-                              ₹{o.amount}
-                            </td>
-                          </tr>
-                        ))}
-                        {orders.length === 0 && (
-                          <tr>
-                            <td colSpan={3} className="px-5 py-8 text-center text-gray-600">
-                              No orders logged yet.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -725,7 +537,7 @@ export default function AdminPanel({
                     </div>
 
                     <form onSubmit={handleProductSubmit} className="space-y-4 font-sans text-xs">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-gray-400 font-bold">Bundle Offer Title</label>
                           <input
@@ -738,19 +550,9 @@ export default function AdminPanel({
                           />
                         </div>
 
-                        <div className="space-y-1">
-                          <label className="text-gray-400 font-bold">Category Line</label>
-                          <input
-                            type="text"
-                            placeholder="e.g. Ultimate Master Pack"
-                            value={prodCategory}
-                            onChange={(e) => setProdCategory(e.target.value)}
-                            className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none"
-                          />
-                        </div>
                       </div>
 
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div className="space-y-1">
                           <label className="text-gray-400 font-bold">Sale Price (₹)</label>
                           <input
@@ -776,18 +578,6 @@ export default function AdminPanel({
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-gray-400 font-bold">Discount Tag</label>
-                          <input
-                            type="text"
-                            required
-                            placeholder="e.g. -97%"
-                            value={prodDiscountTag}
-                            onChange={(e) => setProdDiscountTag(e.target.value)}
-                            className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none"
-                          />
-                        </div>
-
-                        <div className="space-y-1">
                           <label className="text-gray-400 font-bold">Offer Banner overlay text</label>
                           <input
                             type="text"
@@ -801,28 +591,17 @@ export default function AdminPanel({
                       </div>
 
                       <div className="space-y-1">
-                        <label className="text-gray-400 font-bold">Product Description Overview</label>
+                        <label className="text-gray-400 font-bold">Product Description</label>
                         <textarea
-                          rows={2}
+                          rows={6}
                           required
                           value={prodDescription}
                           onChange={(e) => setProdDescription(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none resize-none"
-                          placeholder="Provide a convincing summary for clients layout..."
+                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none resize-y"
+                          placeholder="Provide a complete description for your product. You can write multiple lines here..."
                         />
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-bold">
-                          Deliverable Highlights (Paste individual lines to render list items)
-                        </label>
-                        <textarea
-                          rows={2}
-                          value={prodFeaturesInput}
-                          onChange={(e) => setProdFeaturesInput(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none resize-none font-mono text-[11px]"
-                          placeholder="Premium 9:16 portrait video files without logo&#10;Fully organized Starred Google Drive link folder"
-                        />
                        {/* Product Image Selection & Input */}
                       <div className="space-y-4 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
                         <div className="flex items-center justify-between">
@@ -891,37 +670,102 @@ export default function AdminPanel({
                               />
                             </div>
                           </div>
+                        </div>
+                      </div>
 
-                          <div className="pt-1.5 border-t border-[#140f10]">
-                            <span className="text-[10px] text-gray-500 block mb-1.5 uppercase font-bold tracking-wider">Option C: Choose from Design Catalog Templates below:</span>
-                            {/* Aesthetic Design Gallery Picker */}
-                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                              {gallery.map((galleryItem, idx) => (
-                                <button
-                                  key={idx}
-                                  type="button"
-                                  onClick={() => setProdImage(galleryItem.url)}
-                                  className={`group relative aspect-[4/3] rounded-lg overflow-hidden border-2 transition-all active:scale-95 ${
-                                    prodImage === galleryItem.url ? "border-amber-400 font-extrabold shadow-lg shadow-amber-500/10" : "border-[#231a1c] hover:border-gray-500"
-                                  }`}
-                                >
-                                  <img
-                                    src={galleryItem.url}
-                                    alt={galleryItem.label}
-                                    referrerPolicy="no-referrer"
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                                  />
-                                  <div className="absolute inset-0 bg-black/40 flex items-end justify-center pb-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <span className="text-[8px] text-white font-sans bg-black/85 px-1 py-0.5 rounded-sm truncate max-w-full">
-                                      {galleryItem.label}
-                                    </span>
-                                  </div>
-                                </button>
-                              ))}
+                      {/* Checkout Page Image Override */}
+                      <div className="space-y-4 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#fbbf24] font-extrabold text-xs uppercase tracking-wider block">Digital Product Main Photo</span>
+                          <span className="text-[10px] text-gray-500 font-bold">Checkout Modal Cover</span>
+                        </div>
+                        
+                        {/* Live Checkout Cover Preview */}
+                        {prodCheckoutImage && (
+                          <div className="relative aspect-[16/9] w-full rounded-lg overflow-hidden border border-[#231a1c] bg-black/40">
+                            <img 
+                              src={prodCheckoutImage} 
+                              alt="Checkout Preview" 
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/40 to-transparent p-2 flex justify-between items-center">
+                              <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md bg-black/60 text-amber-400 border border-amber-500/20 backdrop-blur-md">
+                                Preview
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setProdCheckoutImage("")}
+                                className="text-[9px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded-md hover:bg-red-500/40 font-bold backdrop-blur-md cursor-pointer transition-colors"
+                              >
+                                Discard
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Option A: Direct Gallery Upload 📁</label>
+                              <div className="relative group flex items-center justify-center bg-[#140f10] hover:bg-[#1a1415] border border-dashed border-[#231a1c] hover:border-amber-400/50 rounded-lg px-3 py-2.5 transition-all cursor-pointer text-center min-h-[46px]">
+                                <span className="text-[11px] text-amber-400 group-hover:text-amber-300 font-black flex items-center gap-1">
+                                  <span>📁 Select Photo from Gallery</span>
+                                </span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        if (typeof reader.result === "string") {
+                                          setProdCheckoutImage(reader.result);
+                                        }
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Option B: Image URL (Link)</label>
+                              <input
+                                type="text"
+                                placeholder="Paste custom web image URL here"
+                                value={prodCheckoutImage.startsWith("data:") ? "" : prodCheckoutImage}
+                                onChange={(e) => setProdCheckoutImage(e.target.value)}
+                                className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none font-mono text-xs min-h-[46px]"
+                              />
                             </div>
                           </div>
                         </div>
                       </div>
+
+                      {/* Main Video Optional Input */}
+                      <div className="space-y-4 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[#fbbf24] font-extrabold text-xs uppercase tracking-wider block">Main Video Link</span>
+                          <span className="text-[10px] text-gray-500 font-bold">Extra Main Video Option</span>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-1 gap-3">
+                            <div className="space-y-1">
+                              <label className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">Video URL (e.g. mp4)</label>
+                              <input
+                                type="text"
+                                placeholder="Paste video link here"
+                                value={prodMainVideo}
+                                onChange={(e) => setProdMainVideo(e.target.value)}
+                                className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-2 text-white outline-none font-mono text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Product Delivery Google Drive Link */}
@@ -957,48 +801,6 @@ export default function AdminPanel({
                         <p className="text-[9px] text-gray-500 font-sans">
                           If left empty, users will automatically fall back to the global store link configured in global settings.
                         </p>
-                      </div>
-
-                      {/* Product Demo Videos (Optional) */}
-                      <div className="space-y-3 bg-[#0a0708] p-4 rounded-xl border border-[#231a1c]">
-                        <div>
-                          <span className="text-gray-400 font-bold block">Product Demo Previews (Optional .mp4 URLs)</span>
-                          <span className="text-[10px] text-gray-500 block leading-normal">
-                            Configure up to 4 portrait short clips (9:16) specific to this product. If left blank, they will automatically default to globally configured videos from settings.
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Demo Video 1 (.mp4 link)</label>
-                            <input
-                              type="url"
-                              placeholder="e.g. https://player.vimeo.com/external/..."
-                              value={prodDemoVideo1}
-                              onChange={(e) => setProdDemoVideo1(e.target.value)}
-                              className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-1.5 text-white font-mono text-[11px] outline-none"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Demo Video 2 (.mp4 link)</label>
-                            <input
-                              type="url"
-                              placeholder="e.g. https://player.vimeo.com/external/..."
-                              value={prodDemoVideo2}
-                              onChange={(e) => setProdDemoVideo2(e.target.value)}
-                              className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-1.5 text-white font-mono text-[11px] outline-none"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <label className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Demo Video 3 (.mp4 link)</label>
-                            <input
-                              type="url"
-                              placeholder="e.g. https://player.vimeo.com/external/..."
-                              value={prodDemoVideo3}
-                              onChange={(e) => setProdDemoVideo3(e.target.value)}
-                              className="w-full bg-[#140f10] border border-[#231a1c] focus:border-amber-400/50 rounded-lg px-3 py-1.5 text-white font-mono text-[11px] outline-none"
-                            />
-                          </div>
-                        </div>
                       </div>
 
                       <div className="flex items-center gap-3 pt-2">
@@ -1111,121 +913,6 @@ export default function AdminPanel({
               </div>
             )}
 
-            {/* -------------------- VIEW C: DEMO VIDEOS TAB -------------------- */}
-            {activeTab === "demoVideos" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-display font-black text-white">Demo Videos</h2>
-                  <p className="text-xs text-gray-500">Manage promotional preview trailers</p>
-                </div>
-
-                <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4">
-                  <span className="text-xs tracking-wider font-bold uppercase text-[#fbbf24] block">Featured Preview Reels Channel</span>
-                  <p className="text-xs text-gray-400 leading-relaxed max-w-xl">
-                    These are 3 video shorts pre-loaded into client views to allow users to verify the resolution, aesthetic filters, and neon frames of the health compilation bundle immediately before they purchase.
-                  </p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
-                    <div className="bg-[#0a0708] border border-[#231a1c] p-4 rounded-xl space-y-2">
-                      <h5 className="text-xs font-bold text-gray-300">Fitness Demo Clip 1 (Portrait URL)</h5>
-                      <input
-                        type="text"
-                        value={video1}
-                        onChange={(e) => setVideo1(e.target.value)}
-                        className="w-full bg-[#140f10] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-lg px-3 py-2 text-xs font-mono text-gray-300 outline-none"
-                      />
-                    </div>
-                    <div className="bg-[#0a0708] border border-[#231a1c] p-4 rounded-xl space-y-2">
-                      <h5 className="text-xs font-bold text-gray-300">Workout Demo Clip 2 (Portrait URL)</h5>
-                      <input
-                        type="text"
-                        value={video2}
-                        onChange={(e) => setVideo2(e.target.value)}
-                        className="w-full bg-[#140f10] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-lg px-3 py-2 text-xs font-mono text-gray-300 outline-none"
-                      />
-                    </div>
-                    <div className="bg-[#0a0708] border border-[#231a1c] p-4 rounded-xl space-y-2">
-                      <h5 className="text-xs font-bold text-gray-300">Yoga Demo Clip 3 (Portrait URL)</h5>
-                      <input
-                        type="text"
-                        value={video3}
-                        onChange={(e) => setVideo3(e.target.value)}
-                        className="w-full bg-[#140f10] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-lg px-3 py-2 text-xs font-mono text-gray-300 outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      onUpdateSettings({
-                        ...settings,
-                        video1,
-                        video2,
-                        video3,
-                      });
-                      alert("All 3 demo preview video links updated successfully!");
-                    }}
-                    className="py-2.5 px-6 bg-[#fbbf24] text-black font-extrabold text-xs rounded-xl hover:bg-white transition-all font-sans cursor-pointer font-sans"
-                  >
-                    Save Videos Settings
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* -------------------- VIEW D: BANNER FLASH SETTINGS TAB -------------------- */}
-            {activeTab === "banner" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-display font-black text-white">Banner Settings</h2>
-                  <p className="text-xs text-gray-500">Modify visual banners & alert notice slogans</p>
-                </div>
-
-                <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4">
-                  <span className="text-xs tracking-wider font-bold uppercase text-[#fbbf24] block">Global Alert Ribbon Slogan</span>
-                  <div className="space-y-4 max-w-xl font-sans text-xs">
-                    <div className="space-y-1.5">
-                      <label className="text-gray-400 font-semibold">Limited Offer Slogan (Displays as top alert badge)</label>
-                      <input
-                        type="text"
-                        required
-                        value={logoText}
-                        onChange={(e) => setLogoText(e.target.value)}
-                        className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white"
-                        placeholder="e.g. Digital Hub storefront"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-gray-400 font-semibold">Hero Heading Focus</label>
-                      <input
-                        type="text"
-                        required
-                        value={footerText}
-                        onChange={(e) => setFooterText(e.target.value)}
-                        className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white"
-                        placeholder="e.g. Health Reels storefront"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      onUpdateSettings({
-                        ...settings,
-                        logoText,
-                        footerText,
-                      });
-                      alert("Main banner slogans modified successfully!");
-                    }}
-                    className="py-2.5 px-6 bg-[#fbbf24] text-black font-extrabold text-xs rounded-xl hover:bg-white transition-all font-sans cursor-pointer"
-                  >
-                    Save Slogans
-                  </button>
-                </div>
-              </div>
-            )}
-
             {/* -------------------- VIEW E: DETAILED ORDERS LIST (Screenshot 4) -------------------- */}
             {activeTab === "orders" && (
               <div className="space-y-6">
@@ -1265,6 +952,7 @@ export default function AdminPanel({
                           <th className="px-5 py-3">Email</th>
                           <th className="px-5 py-3">Mobile</th>
                           <th className="px-5 py-3 text-right">Amount</th>
+                          <th className="px-5 py-3 text-right">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#231a1c]">
@@ -1276,140 +964,24 @@ export default function AdminPanel({
                             <td className="px-5 py-4 text-right font-black text-[#fbbf24] text-xs">
                               ₹{o.amount}
                             </td>
+                            <td className="px-5 py-4 text-right text-xs">
+                              <span className={`px-2 py-0.5 rounded-full font-bold ${
+                                (o as any).status === "Cancel" ? "text-red-400 bg-red-500/10 border border-red-500/20" : "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
+                              }`}>
+                                {(o as any).status === "Cancel" ? "Cancel" : "Success"}
+                              </span>
+                            </td>
                           </tr>
                         ))}
                         {filteredOrders.length === 0 && (
                           <tr>
-                            <td colSpan={4} className="px-5 py-8 text-center text-gray-600">
+                            <td colSpan={5} className="px-5 py-8 text-center text-gray-600">
                               No matching purchase orders found.
                             </td>
                           </tr>
                         )}
                       </tbody>
                     </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* -------------------- VIEW F: USER ACCESS GRANT TAB (Screenshot 5) -------------------- */}
-            {activeTab === "userAccess" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-display font-black text-white">User Access</h2>
-                  <p className="text-xs text-gray-500">Grant free access by User ID (6 digits).</p>
-                </div>
-
-                {/* Form matches Screenshot 5 exactly */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-sans border-b border-[#231a1c] pb-2">
-                      Grant New Access
-                    </h3>
-
-                    <form onSubmit={handleGrantAccess} className="space-y-4 font-sans text-xs">
-                      {/* User ID Field */}
-                      <div className="space-y-1.5">
-                        <input
-                          type="text"
-                          required
-                          maxLength={6}
-                          placeholder="User ID (6 digits)"
-                          value={accessUserId}
-                          onChange={(e) => setAccessUserId(e.target.value.replace(/\D/g, ""))}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-3 text-white outline-none transition-all placeholder-gray-600"
-                        />
-                      </div>
-
-                      {/* Dropdown Select Field */}
-                      <div className="space-y-1.5">
-                        <select
-                          value={accessProduct}
-                          onChange={(e) => setAccessProduct(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-3 text-white outline-none cursor-pointer"
-                        >
-                          <option value="All products (full access)">All products (full access)</option>
-                          {products.map((p) => (
-                            <option key={p.id} value={p.title}>
-                              {p.title}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      {/* Note Field */}
-                      <div className="space-y-1.5">
-                        <input
-                          type="text"
-                          placeholder="Note (optional)"
-                          value={accessNote}
-                          onChange={(e) => setAccessNote(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-3 text-white outline-none transition-all placeholder-gray-600"
-                        />
-                      </div>
-
-                      {accessMessage && (
-                        <div className="text-xs text-emerald-400 bg-emerald-500/5 border border-emerald-500/20 px-3.5 py-2.5 rounded-xl font-bold">
-                          {accessMessage}
-                        </div>
-                      )}
-
-                      {/* Grant button matching Yellow style of Screenshot 5 */}
-                      <button
-                        type="submit"
-                        className="py-3 px-5 bg-[#fbbf24] font-black text-black rounded-xl hover:bg-white tracking-wide uppercase transition-all text-xs flex items-center justify-center gap-1.5 cursor-pointer font-sans"
-                      >
-                        <Plus className="w-4 h-4 stroke-[2.5px]" />
-                        <span>GRANT ACCESS</span>
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Active Grants List */}
-                  <div className="bg-[#140f10] border border-[#231a1c] rounded-2xl p-6 space-y-4">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider font-sans border-b border-[#231a1c] pb-2">
-                      Active Access Passes
-                    </h3>
-
-                    <div className="space-y-3 font-sans max-h-[300px] overflow-y-auto">
-                      {userAccesses.map((ua) => (
-                        <div
-                          key={ua.id || ua.userId}
-                          className="bg-[#0a0708] border border-[#231a1c] p-3.5 rounded-xl flex items-center justify-between gap-3"
-                        >
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono font-black text-yellow-400 tracking-widest text-xs bg-yellow-400/5 px-2 py-0.5 rounded border border-yellow-400/10">
-                                ID: {ua.userId}
-                              </span>
-                              <span className="text-[10px] text-gray-500 font-mono">{ua.date}</span>
-                            </div>
-                            <p className="text-[11px] text-gray-300 font-bold max-w-[180px] sm:max-w-xs truncate">
-                              {ua.productName}
-                            </p>
-                            {ua.note && <p className="text-[10px] text-gray-600 leading-none">Note: {ua.note}</p>}
-                          </div>
-
-                          {onDeleteUserAccess && (
-                            <button
-                              onClick={() => {
-                                if (confirm(`Revoke free access token for user ${ua.userId}?`)) {
-                                  onDeleteUserAccess(ua.id || ua.userId);
-                                }
-                              }}
-                              className="p-1 px-2 hover:bg-rose-500/10 border border-transparent hover:border-rose-500/20 text-rose-400 text-[10px] font-bold rounded-lg transition-colors shrink-0"
-                            >
-                              Revoke
-                            </button>
-                          )}
-                        </div>
-                      ))}
-                      {userAccesses.length === 0 && (
-                        <div className="text-center py-6 text-gray-600 text-xs">
-                          No active complimentary access passes.
-                        </div>
-                      )}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -1540,7 +1112,7 @@ export default function AdminPanel({
                             value={contactPhone}
                             onChange={(e) => setContactPhone(e.target.value)}
                             className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all"
-                            placeholder="+919623508876"
+                            placeholder="+91 96235 08876"
                           />
                         </div>
                       </div>
@@ -1555,262 +1127,6 @@ export default function AdminPanel({
                     </button>
                   </div>
 
-                </div>
-              </div>
-            )}
-
-            {/* -------------------- VIEW H: DYNAMIC PHOTO GALLERY MANAGER -------------------- */}
-            {activeTab === "gallery" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-display font-black text-white">Product Photo Gallery</h2>
-                  <p className="text-xs text-gray-500">Add or manage photos used as catalog cover designs</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start font-sans text-xs">
-                  {/* Left Column: Form to add image to gallery */}
-                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-1">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
-                      Add New Photo
-                    </h3>
-
-                    <form onSubmit={handleAddToGallery} className="space-y-4">
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-semibold">Image Label (Title)</label>
-                        <input
-                          type="text"
-                          required
-                          value={galleryNewLabel}
-                          onChange={(e) => setGalleryNewLabel(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs"
-                          placeholder="e.g. Health & Gym Bundle"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-semibold">Image Direct URL</label>
-                        <input
-                          type="url"
-                          required
-                          value={galleryNewUrl}
-                          onChange={(e) => setGalleryNewUrl(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs font-mono"
-                          placeholder="e.g. https://images.unsplash.com/photo-..."
-                        />
-                        <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                          Paste a valid, direct image link (JPEG, PNG, or Unsplash source link).
-                        </span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full py-3 bg-[#fbbf24] hover:bg-white text-black font-extrabold text-xs rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 stroke-[2.5px]" />
-                        <span>Add To Gallery</span>
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Right Column: Listing and deleting existing gallery images */}
-                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-2">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
-                      Manage Gallery Assets ({gallery.length})
-                    </h3>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {gallery.map((item, index) => (
-                        <div 
-                          key={index}
-                          className="group relative bg-[#0a0708] border border-[#231a1c] rounded-xl overflow-hidden flex flex-col justify-between h-44"
-                        >
-                          <div className="aspect-[4/3] w-full overflow-hidden relative bg-black/40">
-                            <img 
-                              src={item.url} 
-                              alt={item.label}
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
-                          </div>
-
-                          <div className="p-2 space-y-1.5 flex-grow flex flex-col justify-between bg-[#0e0a0b] border-t border-[#1a1314]">
-                            <div className="text-[10px] font-bold text-gray-200 truncate leading-tight">
-                              {item.label}
-                            </div>
-                            
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (confirm(`Are you sure you want to remove "${item.label}" from the gallery?`)) {
-                                  handleDeleteFromGallery(index);
-                                }
-                              }}
-                              className="w-full py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[9px] font-bold rounded border border-rose-500/10 flex items-center justify-center gap-1 transition-colors self-end mt-1 cursor-pointer"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              <span>Remove</span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-
-                      {gallery.length === 0 && (
-                        <div className="col-span-full py-12 text-center text-xs text-gray-600">
-                          Your custom Photo Gallery is empty. Add photo links using the form on the left.
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* -------------------- VIEW I: DYNAMIC DISCOUNT CODES MANAGER -------------------- */}
-            {activeTab === "discounts" && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-xl font-display font-black text-white">Discount Coupon Codes</h2>
-                  <p className="text-xs text-gray-500">Create, customize and activate promo discount codes for customers</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start font-sans text-xs">
-                  {/* Left Column: Form to create code */}
-                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-1">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
-                      Generate New Code
-                    </h3>
-
-                    <form 
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!newCodeName.trim()) return;
-                        const formattedCode = newCodeName.trim().toUpperCase().replace(/\s+/g, '');
-                        
-                        // Check duplicates
-                        if (discountCodes.some(c => c.code === formattedCode)) {
-                          alert("A coupon code with this handle already exists!");
-                          return;
-                        }
-
-                        const newCode: DiscountCode = {
-                          id: `dc-${Date.now()}`,
-                          code: formattedCode,
-                          type: newCodeType,
-                          value: Number(newCodeValue) || 0
-                        };
-
-                        if (onUpdateDiscountCodes) {
-                          onUpdateDiscountCodes([...discountCodes, newCode]);
-                        }
-                        
-                        setNewCodeName("");
-                        setNewCodeValue(10);
-                        alert(`Discount code "${formattedCode}" generated and activated successfully!`);
-                      }} 
-                      className="space-y-4"
-                    >
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-semibold">Promo Code (e.g. ULTRA50, ASHISH25)</label>
-                        <input
-                          type="text"
-                          required
-                          value={newCodeName}
-                          onChange={(e) => setNewCodeName(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs font-mono uppercase"
-                          placeholder="e.g. HALFOFF"
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-semibold">Discount Type</label>
-                        <select
-                          value={newCodeType}
-                          onChange={(e: any) => setNewCodeType(e.target.value)}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-3 py-2.5 text-white outline-none transition-all text-xs cursor-pointer"
-                        >
-                          <option value="percentage">Percentage (%) Discount</option>
-                          <option value="flat">Flat Value (₹) Discount</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-gray-400 font-semibold">Discount Value</label>
-                        <input
-                          type="number"
-                          required
-                          min={1}
-                          max={newCodeType === "percentage" ? 100 : 9999}
-                          value={newCodeValue}
-                          onChange={(e) => setNewCodeValue(Number(e.target.value))}
-                          className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-4 py-2.5 text-white outline-none transition-all text-xs"
-                          placeholder="e.g. 10"
-                        />
-                        <span className="text-[10px] text-gray-500 block pt-1">
-                          {newCodeType === "percentage" ? "Enter percent discount (1 - 100)" : "Enter amount to reduce in INR (₹)"}
-                        </span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        className="w-full py-3 bg-[#fbbf24] hover:bg-white text-black font-extrabold text-xs rounded-xl uppercase tracking-wider transition-all shadow-md active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <Plus className="w-4 h-4 stroke-[2.5px]" />
-                        <span>Generate & Activate</span>
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Right Column: Listing and deleting existing codes */}
-                  <div className="bg-[#140f10] border border-[#231a1c] p-6 rounded-2xl space-y-4 md:col-span-2">
-                    <h3 className="text-sm font-bold text-white uppercase tracking-wider border-b border-[#231a1c] pb-2">
-                      Active Coupon Codes ({discountCodes.length})
-                    </h3>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {discountCodes.map((codeItem) => (
-                        <div 
-                          key={codeItem.id}
-                          className="bg-[#0a0708] border border-[#231a1c] rounded-xl p-4 flex flex-col justify-between space-y-3"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <span className="bg-[#fbbf24]/10 text-[#fbbf24] font-mono text-sm leading-none font-black px-2 py-1 rounded border border-[#fbbf24]/20 select-all uppercase">
-                                {codeItem.code}
-                              </span>
-                              <div className="text-[10px] text-gray-500 mt-2 font-sans">
-                                Benefit: <span className="text-gray-300 font-bold">{codeItem.type === "percentage" ? `${codeItem.value}% off` : `₹${codeItem.value} flat discount`}</span>
-                              </div>
-                            </div>
-
-                            <span className="bg-emerald-500/10 text-emerald-400 font-sans text-[9px] font-bold px-1.5 py-0.5 rounded border border-emerald-500/10">
-                              Active
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Deactivate promo coupon "${codeItem.code}"?`)) {
-                                if (onUpdateDiscountCodes) {
-                                  onUpdateDiscountCodes(discountCodes.filter(c => c.id !== codeItem.id));
-                                }
-                              }
-                            }}
-                            className="w-full py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-[10px] font-bold rounded-lg border border-rose-500/10 flex items-center justify-center gap-1 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                            <span>Deactivate Code</span>
-                          </button>
-                        </div>
-                      ))}
-
-                      {discountCodes.length === 0 && (
-                        <div className="col-span-full py-12 text-center text-xs text-gray-600 font-sans">
-                          No active promo discount codes available. Generate codes on the left panel!
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               </div>
             )}

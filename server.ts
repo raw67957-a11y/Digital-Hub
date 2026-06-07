@@ -77,7 +77,7 @@ async function startServer() {
             customer_phone: sanitizedPhone
           },
           order_meta: {
-            return_url: `${process.env.APP_URL || "http://localhost:3000"}/?order_id={order_id}`
+            return_url: `${process.env.APP_URL || process.env.VITE_URL || "http://localhost:3000"}/?order_id={order_id}&prod_id=${encodeURIComponent(productId)}&name=${encodeURIComponent(name || "")}&email=${encodeURIComponent(email || "")}&phone=${encodeURIComponent(sanitizedPhone)}&amount=${amount}`
           }
         };
 
@@ -112,7 +112,8 @@ async function startServer() {
           orderId: orderData.order_id,
           amount: orderData.order_amount,
           currency: "INR",
-          isDemo: false
+          isDemo: false,
+          env: paymentEnv
         });
       } else {
         // Fallback to high-fidelity demo mode with clear log message when unconfigured

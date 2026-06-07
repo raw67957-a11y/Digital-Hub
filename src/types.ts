@@ -6,6 +6,8 @@ export interface Product {
   discountTag: string;
   discountText: string;
   image: string;
+  checkoutImage?: string;
+  mainVideo?: string;
   category: string;
   rating: number;
   buyersCount: number;
