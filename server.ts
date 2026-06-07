@@ -1,8 +1,24 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { createServer as createViteServer } from "vite";
-import Razorpay from "razorpay";
-import crypto from "crypto";
+
+function isValidCashfreeKey(key: string | undefined): boolean {
+  if (!key) return false;
+  const k = key.trim().toLowerCase();
+  if (k === "" || k === "undefined" || k === "null") return false;
+  if (
+    k.includes("your_") ||
+    k.includes("your-") ||
+    k.includes("placeholder") ||
+    k.includes("enter_") ||
+    k.includes("todo") ||
+    k.length < 5
+  ) {
+    return false;
+  }
+  return true;
+}
 
 async function startServer() {
   const app = express();
@@ -11,83 +27,115 @@ async function startServer() {
   // Middleware to parse requests
   app.use(express.json());
 
-  // API: Check Razorpay keys configuration state
+  // API: Check Cashfree keys configuration state
   app.get("/api/pay-config", (req, res) => {
-    const hasKeys = !!(process.env.VITE_RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
+    const appId = process.env.VITE_CASHFREE_APP_ID;
+    const secretKey = process.env.CASHFREE_SECRET_KEY;
+    const hasKeys = isValidCashfreeKey(appId) && isValidCashfreeKey(secretKey);
     res.json({
       isConfigured: hasKeys,
-      keyId: process.env.VITE_RAZORPAY_KEY_ID || ""
+      appId: appId || "",
+      env: process.env.VITE_CASHFREE_ENV || "sandbox"
     });
   });
 
-  // API: Create Razorpay Order
-  app.post("/api/razorpay-order", async (req, res) => {
+  // API: Create Cashfree Order
+  app.post("/api/cashfree-order", async (req, res) => {
     try {
       const { amount, productId, email, name, phone } = req.body;
-      const keyId = process.env.VITE_RAZORPAY_KEY_ID;
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      const appId = process.env.VITE_CASHFREE_APP_ID;
+      const secretKey = process.env.CASHFREE_SECRET_KEY;
+      const paymentEnv = process.env.VITE_CASHFREE_ENV || "sandbox";
 
       if (!amount) {
         return res.status(400).json({ success: false, error: "Amount is required" });
       }
 
-      // Convert INR amount to paise (e.g. ₹99 = 9900 paise)
-      const amountInPaise = Math.round(amount * 100);
+      if (isValidCashfreeKey(appId) && isValidCashfreeKey(secretKey)) {
+        const host = paymentEnv === "production"
+          ? "https://api.cashfree.com"
+          : "https://sandbox.cashfree.com";
 
-      if (keyId && keySecret) {
-        // Initialize Razorpay client lazily to prevent start crashes if environment variables are not loaded yet
-        const razorpay = new Razorpay({
-          key_id: keyId,
-          key_secret: keySecret
-        });
+        // Clean user's contact number to 10-digits
+        let sanitizedPhone = (phone || "").replace(/[^\d]/g, "");
+        if (sanitizedPhone.length < 10) {
+          sanitizedPhone = "9999999999";
+        } else {
+          sanitizedPhone = sanitizedPhone.substring(sanitizedPhone.length - 10);
+        }
 
-        const options = {
-          amount: amountInPaise,
-          currency: "INR",
-          receipt: `receipt_${productId.substring(0, 8)}_${Date.now()}`,
-          notes: {
-            productId,
-            email,
-            name,
-            phone
+        const cfOrderId = `cf_${productId.substring(0, 8)}_${Date.now()}`;
+
+        const payload = {
+          order_id: cfOrderId,
+          order_amount: Number(amount),
+          order_currency: "INR",
+          customer_details: {
+            customer_id: `cust_${Date.now()}`,
+            customer_name: name || "Customer",
+            customer_email: email || "customer@example.com",
+            customer_phone: sanitizedPhone
+          },
+          order_meta: {
+            return_url: `${process.env.APP_URL || "http://localhost:3000"}/?order_id={order_id}`
           }
         };
 
-        const order = await razorpay.orders.create(options);
+        const response = await fetch(`${host}/pg/orders`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-client-id": appId,
+            "x-client-secret": secretKey,
+            "x-api-version": "2023-08-01"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const orderData = await response.json() as any;
+
+        if (!response.ok || !orderData.payment_session_id) {
+          console.error("Cashfree API order creation failure:", orderData);
+          throw new Error(orderData.message || "Failed to establish secure merchant transaction.");
+        }
+
         return res.json({
           success: true,
-          orderId: order.id,
-          amount: order.amount,
+          paymentSessionId: orderData.payment_session_id,
+          orderId: orderData.order_id,
+          amount: orderData.order_amount,
           currency: "INR",
-          keyId: keyId,
           isDemo: false
         });
       } else {
         // Fallback to high-fidelity demo mode with clear log message when unconfigured
-        console.log("Razorpay keys not configured. Falling back to Sandbox/Demo payment.");
+        console.log("Cashfree keys not configured. Falling back to Sandbox/Demo payment.");
         return res.json({
           success: true,
+          paymentSessionId: `demo_session_${Math.random().toString(36).substring(2, 11)}`,
           orderId: `demo_order_${Math.random().toString(36).substring(2, 11)}`,
-          amount: amountInPaise,
+          amount: Number(amount),
           currency: "INR",
-          keyId: "demo_key_unconfigured",
           isDemo: true
         });
       }
     } catch (error: any) {
-      console.error("Error creating Razorpay order:", error);
-      res.status(500).json({ success: false, error: error.message || "Failed to create order" });
+      console.error("Error creating Cashfree order:", error);
+      res.status(500).json({ success: false, error: error.message || "Failed to create Cashfree order" });
     }
   });
 
-  // API: Verify Razorpay Payment Signature
-  app.post("/api/razorpay-verify", (req, res) => {
+  // API: Verify Cashfree Payment status
+  app.post("/api/cashfree-verify", async (req, res) => {
     try {
-      const { razorpay_order_id, razorpay_payment_id, razorpay_signature, isDemo } = req.body;
-      const keySecret = process.env.RAZORPAY_KEY_SECRET;
+      const { order_id, isDemo } = req.body;
+      const appId = process.env.VITE_CASHFREE_APP_ID;
+      const secretKey = process.env.CASHFREE_SECRET_KEY;
+      const paymentEnv = process.env.VITE_CASHFREE_ENV || "sandbox";
+      const hasKeys = isValidCashfreeKey(appId) && isValidCashfreeKey(secretKey);
 
-      if (isDemo || !keySecret) {
-        if (razorpay_order_id && razorpay_order_id.startsWith("demo_order_")) {
+      if (isDemo || !hasKeys) {
+        if (order_id && order_id.startsWith("demo_order_")) {
           return res.json({
             success: true,
             verified: true,
@@ -98,30 +146,45 @@ async function startServer() {
         return res.status(400).json({ success: false, error: "Invalid demo transaction key." });
       }
 
-      // Verify legitimate Razorpay webhook/redirect signature using HMAC SHA256
-      const body = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSignature = crypto
-        .createHmac("sha256", keySecret)
-        .update(body.toString())
-        .digest("hex");
+      const host = paymentEnv === "production"
+        ? "https://api.cashfree.com"
+        : "https://sandbox.cashfree.com";
 
-      if (expectedSignature === razorpay_signature) {
+      const response = await fetch(`${host}/pg/orders/${order_id}`, {
+        method: "GET",
+        headers: {
+          "x-client-id": appId,
+          "x-client-secret": secretKey,
+          "x-api-version": "2023-08-01"
+        }
+      });
+
+      const orderData = await response.json() as any;
+
+      if (!response.ok) {
+        console.error("Cashfree order lookup failure:", orderData);
+        throw new Error(orderData.message || "Unable to lookup order with Cashfree backend.");
+      }
+
+      // Cashfree returns "PAID" for completed transactions
+      if (orderData.order_status === "PAID") {
         return res.json({
           success: true,
           verified: true,
           isDemo: false,
-          message: "Payment signature verified successfully!"
+          message: "Payment verified successfully!"
         });
       } else {
-        return res.status(400).json({
+        return res.json({
           success: false,
           verified: false,
-          error: "Razorpay signature verification failed."
+          status: orderData.order_status,
+          message: `Payment status is ${orderData.order_status}.`
         });
       }
     } catch (error: any) {
-      console.error("Error verifying payment signature:", error);
-      res.status(500).json({ success: false, error: error.message || "Failed to verify signature" });
+      console.error("Error verifying Cashfree payment:", error);
+      res.status(500).json({ success: false, error: error.message || "Failed to verify transaction" });
     }
   });
 

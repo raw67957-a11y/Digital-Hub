@@ -65,6 +65,60 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStep, setProcessingStep] = useState(0);
   const [isPaid, setIsPaid] = useState(false);
+  const [openedInNewTab, setOpenedInNewTab] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState<string | null>(null);
+  const [currentOrderData, setCurrentOrderData] = useState<any>(null);
+  const pollingIntervalRef = React.useRef<any>(null);
+
+  const stopPolling = () => {
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
+  };
+
+  const startPollingPaymentStatus = (orderId: string, name: string, email: string, phone: string, amount: number, title: string) => {
+    stopPolling();
+    setProcessingStep(3); // Syncing transaction state from secure gateway...
+
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const verifyRes = await fetch("/api/cashfree-verify", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            order_id: orderId,
+            isDemo: false
+          })
+        });
+
+        if (!verifyRes.ok) return;
+
+        const verifyData = await verifyRes.json();
+        if (verifyData.success && verifyData.verified) {
+          stopPolling();
+          setProcessingStep(4); // Generating lifetime folder download link...
+          
+          setTimeout(() => {
+            setIsPaid(true);
+            setIsProcessing(false);
+            setOpenedInNewTab(false);
+            if (onAddOrder) {
+              onAddOrder({
+                customerName: name,
+                email: email,
+                phone: phone,
+                productName: title,
+                amount: amount
+              });
+            }
+          }, 1500);
+        }
+      } catch (err) {
+        console.error("Polling verify check error: ", err);
+      }
+    }, 3000);
+  };
   
   // Review inputs
   const [reviewName, setReviewName] = useState("");
@@ -72,24 +126,85 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewSuccess, setReviewSuccess] = useState(false);
 
-  // Razorpay system integration config states
-  const [payConfig, setPayConfig] = useState<{ isConfigured: boolean; keyId: string } | null>(null);
+  // Cashfree system integration config states
+  const [payConfig, setPayConfig] = useState<{ isConfigured: boolean; appId: string; env: string } | null>(null);
 
   React.useEffect(() => {
     fetch("/api/pay-config")
       .then((res) => res.json())
       .then((data) => setPayConfig(data))
       .catch((err) => console.error("Error retrieving billing gateway metadata:", err));
+
+    // Automated deep status check if redirected back with query order token
+    const urlParams = new URLSearchParams(window.location.search);
+    const orderId = urlParams.get("order_id");
+    if (orderId) {
+      const isDemo = orderId.startsWith("demo_order_");
+      setIsProcessing(true);
+      setProcessingStep(3); // Syncing transaction state from secure gateway...
+
+      fetch("/api/cashfree-verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: orderId, isDemo })
+      })
+        .then((res) => res.json())
+        .then((verifyData) => {
+          if (verifyData.success && verifyData.verified) {
+            setProcessingStep(4); // Generating lifetime folder download link...
+
+            // Restore form inputs from session backup to maintain persistence
+            const savedName = localStorage.getItem("pending_customer_name") || "Valued Customer";
+            const savedEmail = localStorage.getItem("pending_customer_email") || "delivered@email.com";
+            const savedPhone = localStorage.getItem("pending_customer_phone") || "9999999999";
+
+            setFormData({
+              name: savedName,
+              email: savedEmail,
+              phone: savedPhone
+            });
+
+            setTimeout(() => {
+              setIsPaid(true);
+              setIsProcessing(false);
+              // Clear query params elegantly to avoid duplicate submission on reload
+              window.history.replaceState({}, document.title, window.location.pathname);
+
+              if (onAddOrder) {
+                onAddOrder({
+                  customerName: savedName,
+                  email: savedEmail,
+                  phone: savedPhone,
+                  productName: product.title,
+                  amount: product.price
+                });
+              }
+            }, 1000);
+          } else {
+            alert("Verification of order status completed: Unpaid or transaction timed out. Try again.");
+            setIsProcessing(false);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        })
+        .catch((err) => {
+          console.error("Cashfree status sync aborted:", err);
+          setIsProcessing(false);
+        });
+    }
+
+    return () => {
+      stopPolling();
+    };
   }, []);
 
-  const loadRazorpayScript = () => {
+  const loadCashfreeScript = () => {
     return new Promise<boolean>((resolve) => {
-      if ((window as any).Razorpay) {
+      if ((window as any).Cashfree) {
         resolve(true);
         return;
       }
       const script = document.createElement("script");
-      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.src = "https://sdk.cashfree.com/js/v3/cashfree.js";
       script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
@@ -100,8 +215,8 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
   const processingStepsText = [
     "Establishing secure server connection...",
     "Validating secure transaction tunnel...",
-    "Creating verified Razorpay payment order...",
-    "Syncing transaction signature from secure gateway...",
+    "Creating verified Cashfree payment order session...",
+    "Syncing transaction state from secure gateway...",
     "Generating lifetime Google Drive access token..."
   ];
 
@@ -113,18 +228,18 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
     setProcessingStep(0); // Establishing secure server connection...
 
     try {
-      // Step 1: Dynamically mount signature-checked Razorpay checkout SDK
+      // Step 1: Dynamically mount secure Cashfree checkout SDK
       setProcessingStep(1); // Validating secure transaction tunnel...
-      const isScriptLoaded = await loadRazorpayScript();
+      const isScriptLoaded = await loadCashfreeScript();
       if (!isScriptLoaded) {
-        alert("Razorpay payment scripts failed to load. Please check your network connection.");
+        alert("Cashfree payment scripts failed to load. Please check your network connection.");
         setIsProcessing(false);
         return;
       }
 
       // Step 2: Query secure Express API proxy order generation
-      setProcessingStep(2); // Creating verified Razorpay payment order...
-      const res = await fetch("/api/razorpay-order", {
+      setProcessingStep(2); // Creating verified Cashfree payment order...
+      const res = await fetch("/api/cashfree-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -137,7 +252,8 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
       });
 
       if (!res.ok) {
-        throw new Error("Unable to create checkout order with merchant terminal.");
+        const errorJson = await res.json().catch(() => ({}));
+        throw new Error(errorJson.error || "Unable to create checkout order with merchant terminal.");
       }
 
       const orderData = await res.json();
@@ -153,11 +269,11 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
         await new Promise((r) => setTimeout(r, 1200));
 
         // Submit client request to our Express signature verification hook
-        const verifyRes = await fetch("/api/razorpay-verify", {
+        const verifyRes = await fetch("/api/cashfree-verify", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            razorpay_order_id: orderData.orderId,
+            order_id: orderData.orderId,
             isDemo: true
           })
         });
@@ -179,75 +295,51 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
         }
         setIsProcessing(false);
       } else {
-        // Real active Razorpay Gateway checkout window triggered
-        setIsProcessing(false); // Stop block panel so user can engage the Razorpay secure popup
+        // Real active Cashfree Gateway checkout session triggered
+        // Save session credentials to dynamically restore on redirect trigger
+        localStorage.setItem("pending_customer_name", formData.name);
+        localStorage.setItem("pending_customer_email", formData.email);
+        localStorage.setItem("pending_customer_phone", formData.phone);
 
-        const rzpOptions = {
-          key: orderData.keyId,
-          amount: orderData.amount,
-          currency: orderData.currency,
-          name: settings?.logoText || "Digital Hub",
-          description: product.title,
-          image: product.image,
-          order_id: orderData.orderId,
-          handler: async function (response: any) {
-            setIsProcessing(true);
-            setProcessingStep(3); // Verification stage
-            try {
-              const verifyRes = await fetch("/api/razorpay-verify", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_signature: response.razorpay_signature,
-                  isDemo: false
-                })
-              });
-              const verifyData = await verifyRes.json();
-              if (verifyData.success && verifyData.verified) {
-                setProcessingStep(4); // Deliver lifetime token folders
-                await new Promise((r) => setTimeout(r, 600));
-                setIsPaid(true);
-                if (onAddOrder) {
-                  onAddOrder({
-                    customerName: formData.name,
-                    email: formData.email,
-                    phone: formData.phone,
-                    productName: product.title,
-                    amount: product.price
-                  });
-                }
-              } else {
-                alert("Signature validation failed. Please check with your bank card/UPI app.");
-              }
-            } catch (err) {
-              console.error("Signature verify error: ", err);
-              alert("Payment verification lookup failed.");
-            } finally {
-              setIsProcessing(false);
-            }
-          },
-          prefill: {
-            name: formData.name,
-            email: formData.email,
-            contact: formData.phone
-          },
-          theme: {
-            color: "#fbbf24"
-          },
-          modal: {
-            ondismiss: function () {
-              console.log("Razorpay window closed before authorization finished.");
-            }
-          }
-        };
+        // Treat sandbox and production iframes with safe popup windows 
+        const isInsideIframe = window.self !== window.top;
 
-        const razorInstance = new (window as any).Razorpay(rzpOptions);
-        razorInstance.on("payment.failed", function (resp: any) {
-          alert("Payment aborted or failed! Details: " + resp.error.description);
-        });
-        razorInstance.open();
+        if (isInsideIframe) {
+          setCurrentOrderData(orderData);
+          setPendingOrderId(orderData.orderId);
+          setOpenedInNewTab(true);
+          setIsProcessing(true); // Keep processing screen active for background querying
+
+          const cashfreeInstance = (window as any).Cashfree({
+            mode: payConfig?.env || "sandbox"
+          });
+
+          cashfreeInstance.checkout({
+            paymentSessionId: orderData.paymentSessionId,
+            redirectTarget: "_blank"
+          });
+
+          // Start polling backend status in the original iframe
+          startPollingPaymentStatus(
+            orderData.orderId,
+            formData.name,
+            formData.email,
+            formData.phone,
+            product.price,
+            product.title
+          );
+        } else {
+          setIsProcessing(false); 
+
+          const cashfreeInstance = (window as any).Cashfree({
+            mode: payConfig?.env || "sandbox"
+          });
+
+          cashfreeInstance.checkout({
+            paymentSessionId: orderData.paymentSessionId,
+            redirectTarget: "_self"
+          });
+        }
       }
     } catch (error: any) {
       console.error("Payment integration workflow aborted:", error);
@@ -338,6 +430,44 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
               <div className="text-[10px] uppercase font-mono text-gray-600 tracking-widest animate-pulse">
                 Order ID Sync: #525237
               </div>
+
+              {openedInNewTab && (
+                <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-center space-y-3 max-w-sm mx-auto">
+                  <p className="text-xs text-amber-300 leading-relaxed font-sans">
+                    We have opened the secure Cashfree payment page in a new browser tab to satisfy secure sandboxed environment settings.
+                  </p>
+                  <p className="text-[11px] text-gray-400 font-sans leading-relaxed">
+                    Please complete payment in that tab. This window is actively listening and will automatically show your download vault the moment the payment is confirmed by your bank!
+                  </p>
+                  <div className="flex flex-col sm:flex-row justify-center gap-2.5 pt-1.5">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (currentOrderData?.paymentSessionId) {
+                          const mode = payConfig?.env || "sandbox";
+                          const host_url = mode === "production" ? "payments.cashfree.com" : "sandbox.cashfree.com";
+                          window.open(`https://${host_url}/pg/view/checkout?session_id=${currentOrderData.paymentSessionId}`, '_blank');
+                        }
+                      }}
+                      className="px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-95 text-black font-extrabold text-[10px] rounded-xl transition-all tracking-wider uppercase cursor-pointer"
+                    >
+                      Popup blocked? Open page
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        stopPolling();
+                        setIsProcessing(false);
+                        setOpenedInNewTab(false);
+                        setPendingOrderId(null);
+                      }}
+                      className="px-3.5 py-2.5 bg-zinc-900 hover:bg-zinc-800 active:scale-95 text-gray-400 hover:text-white text-[10px] rounded-xl font-bold border border-zinc-800/80 transition-all tracking-wider uppercase cursor-pointer"
+                    >
+                      Cancel Payment
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
           ) : isPaid ? (
@@ -518,7 +648,7 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
                       {payConfig?.isConfigured ? (
                         <div className="flex items-center gap-1.5 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl text-[10px] text-emerald-400 font-mono">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                          <span>Razorpay Connected (Live Payments Active)</span>
+                          <span>Cashfree Payments Connected (Live Active)</span>
                         </div>
                       ) : (
                         <div className="flex flex-col gap-1 bg-amber-500/15 border border-amber-500/20 px-3 py-2.5 rounded-xl text-[10px] text-amber-300 font-mono leading-relaxed">
@@ -527,7 +657,7 @@ export default function CheckoutModal({ product, onClose, onAddReview, reviews, 
                             <span>Sandbox/Demo Mode Active</span>
                           </div>
                           <span className="text-[9px] text-gray-400 font-sans leading-normal">
-                            Set your Razorpay Credentials (<code>VITE_RAZORPAY_KEY_ID</code> and <code>RAZORPAY_KEY_SECRET</code>) in AI Studio Settings (Secrets panel) to start accepting real payments.
+                            Set your Cashfree Credentials (<code>VITE_CASHFREE_APP_ID</code> and <code>CASHFREE_SECRET_KEY</code>) in AI Studio Settings (Secrets panel) to start accepting real payments.
                           </span>
                         </div>
                       )}

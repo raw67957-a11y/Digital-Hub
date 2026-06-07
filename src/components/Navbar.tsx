@@ -9,9 +9,6 @@ interface NavbarProps {
 
 export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
-  const [supportMessage, setSupportMessage] = useState("");
-  const [isMessageSent, setIsMessageSent] = useState(false);
 
   // Hidden admin panel activation keys
   const [showAdminTrigger, setShowAdminTrigger] = useState(() => {
@@ -53,17 +50,6 @@ export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarPro
   const words = (logoText || "Digital Hub").split(" ");
   const firstWord = words[0] || "Digital";
   const restWords = words.slice(1).join(" ") || "Hub";
-
-  const handleSendSupport = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supportMessage.trim()) return;
-    setIsMessageSent(true);
-    setTimeout(() => {
-      setIsMessageSent(false);
-      setSupportMessage("");
-      setIsSupportOpen(false);
-    }, 2500);
-  };
 
   return (
     <header className="sticky top-0 z-50 bg-[#0a0708]/90 backdrop-blur-md border-b border-[#231a1c] py-4 px-4 sm:px-6 md:px-8">
@@ -163,11 +149,9 @@ export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarPro
             </button>
 
             {/* CONTACT option card */}
-            <button
-              onClick={() => {
-                setIsMenuOpen(false);
-                setIsSupportOpen(true);
-              }}
+            <a
+              href="mailto:ashishrshinde15@gmail.com"
+              onClick={() => setIsMenuOpen(false)}
               className="w-full bg-[#140f10] border border-[#231a1c] hover:border-amber-400/50 hover:bg-[#1a1415] text-white py-5 px-6 rounded-[1.5rem] flex items-center gap-4 transition-all duration-200 group text-left active:scale-98"
             >
               <div className="p-1 bg-[#231a1c] rounded-lg text-[#fbbf24] transition-colors group-hover:bg-amber-400 group-hover:text-black">
@@ -185,85 +169,13 @@ export default function Navbar({ onOpenAdmin, isAdminOpen, logoText }: NavbarPro
                 </svg>
               </div>
               <span className="text-xl font-display font-bold tracking-tight">Contact</span>
-            </button>
+            </a>
 
 
           </div>
         </div>
       )}
 
-      {/* Dynamic Support Chat Overlay Modal */}
-      {isSupportOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#140f10] border border-[#231a1c] w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-[#231a1c] flex items-center justify-between bg-gradient-to-r from-amber-400/5 to-transparent">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-amber-400/10 flex items-center justify-center text-amber-400">
-                  <MessageSquare className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-display font-bold text-white text-base">
-                    Hub Help desk
-                  </h3>
-                  <p className="text-xs text-[#fbbf24]/80">Agent ID #525237 online</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setIsSupportOpen(false)}
-                className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-white/5 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {isMessageSent ? (
-                <div className="py-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto animate-bounce">
-                    <ShieldCheck className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-bold">Message Forwarded!</h4>
-                    <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
-                      Support ticket generated safely. A system manager will review your query inside 10 minutes.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleSendSupport} className="space-y-4">
-                  <p className="text-xs text-gray-400 leading-relaxed">
-                    Experiencing download latency or have customization requests for the <span className="text-white font-semibold">100+ Health Reels Bundle</span>? Leave a message below:
-                  </p>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-gray-400">Message Box</label>
-                    <textarea
-                      required
-                      rows={3}
-                      placeholder="e.g., Hi, I bought the ₹15 Bundle but didn't receive the Drive link..."
-                      value={supportMessage}
-                      onChange={(e) => setSupportMessage(e.target.value)}
-                      className="w-full bg-[#0a0708] border border-[#231a1c] focus:border-[#fbbf24]/50 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-600 outline-none transition-all resize-none font-sans"
-                    ></textarea>
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full py-3 bg-[#fbbf24] hover:bg-[#fbbf24]/90 text-black font-extrabold text-sm rounded-xl transition-all shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
-                  >
-                    Send Secure Ticket
-                  </button>
-                </form>
-              )}
-            </div>
-
-            <div className="bg-[#0a0708] p-4 text-center border-t border-[#231a1c]">
-              <div className="flex items-center justify-center gap-1.5 text-[11px] text-gray-500">
-                <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400/20" />
-                <span>Reviewed 4.9/5 stars by organic customers</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </header>
   );
 }
